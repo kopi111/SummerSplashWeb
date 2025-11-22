@@ -1,0 +1,315 @@
+@using System.Linq
+@using SummerSplashWeb.Models
+@{
+    ViewData["Title"] = "Employee Schedules";
+    var view = ViewBag.View as string ?? "employees";
+    var selectedDate = (DateTime)ViewBag.SelectedDate;
+    var startDate = (DateTime)ViewBag.StartDate;
+    var endDate = (DateTime)ViewBag.EndDate;
+    var schedules = ViewBag.Schedules as List<Schedule> ?? new List<Schedule>();
+    var users = ViewBag.Users as List<User> ?? new List<User>();
+    var locations = ViewBag.Locations as List<JobLocation> ?? new List<JobLocation>();
+    var filterUserId = ViewBag.FilterUserId as int?;
+    var filterLocationId = ViewBag.FilterLocationId as int?;
+}
+
+<div class="content-area">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1"><i class="bi bi-calendar-week me-2"></i>Employee Schedules</h2>
+            <p class="text-muted mb-0">View and manage employee work schedules</p>
+        </div>
+        <div>
+            <a href="@Url.Action("Create", new { date = selectedDate })" class="btn btn-success me-2">
+                <i class="bi bi-plus-circle me-2"></i>Add Schedule
+            </a>
+            <a href="@Url.Action("CreateFourWeek", new { startDate = startDate })" class="btn btn-primary">
+                <i class="bi bi-calendar4-week me-2"></i>4-Week Schedule
+            </a>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- View Tabs -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <a href="@Url.Action("Index", new { view = "employees", date = selectedDate })"
+                       class="nav-link @(view == "employees" ? "active" : "")">
+                        <i class="bi bi-people me-1"></i>By Employee
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a href="@Url.Action("Index", new { view = "week", date = selectedDate })"
+                       class="nav-link @(view == "week" ? "active" : "")">
+                        <i class="bi bi-calendar-week me-1"></i>Week View
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a href="@Url.Action("Index", new { view = "calendar", date = selectedDate })"
+                       class="nav-link @(view == "calendar" ? "active" : "")">
+                        <i class="bi bi-calendar3 me-1"></i>Calendar
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Date Navigation -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <h5 class="mb-0">
+                        @startDate.ToString("MMM d") - @endDate.ToString("MMM d, yyyy")
+                    </h5>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="btn-group" role="group">
+                        <a href="@Url.Action("Index", new { view = view, date = startDate.AddDays(-7) })"
+                           class="btn btn-outline-secondary">
+                            <i class="bi bi-chevron-left"></i> Previous Week
+                        </a>
+                        <a href="@Url.Action("Index", new { view = view, date = DateTime.Now })"
+                           class="btn btn-outline-secondary">
+                            Today
+                        </a>
+                        <a href="@Url.Action("Index", new { view = view, date = startDate.AddDays(7) })"
+                           class="btn btn-outline-secondary">
+                            Next Week <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <input type="date" class="form-control d-inline-block w-auto"
+                           value="@selectedDate.ToString("yyyy-MM-dd")"
+                           onchange="window.location.href='@Url.Action("Index")?view=@view&date=' + this.value" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (view == "employees")
+    {
+        <!-- Employee-Centric View -->
+        <div class="row">
+            @foreach (var user in users.Where(u => u.IsActive).OrderBy(u => u.FirstName))
+            {
+                var userSchedules = schedules.Where(s => s.UserId == user.UserId).OrderBy(s => s.ScheduledDate).ToList();
+                var thisWeekSchedules = userSchedules.Where(s => s.ScheduledDate >= startDate && s.ScheduledDate <= endDate).ToList();
+                var totalHours = thisWeekSchedules.Sum(s => s.ScheduledHours);
+
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 hover-shadow">
+                        <div class="card-header bg-primary text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-person-circle me-2"></i>@user.FirstName @user.LastName
+                                    </h6>
+                                    <small>@user.Position</small>
+                                </div>
+                                <a href="@Url.Action("EmployeeSchedule", new { userId = user.UserId, startDate = startDate })"
+                                   class="btn btn-light btn-sm">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted small">This Week</span>
+                                    <span class="badge bg-info">@thisWeekSchedules.Count days</span>
+                                </div>
+                                <h4 class="mb-0">@totalHours.ToString("F1") hours</h4>
+                            </div>
+
+                            @if (thisWeekSchedules.Any())
+                            {
+                                <div class="schedule-preview">
+                                    @foreach (var schedule in thisWeekSchedules.Take(3))
+                                    {
+                                        var location = locations.FirstOrDefault(l => l.LocationId == schedule.LocationId);
+                                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                            <div>
+                                                <small class="text-muted">@schedule.ScheduledDate.ToString("ddd, MMM d")</small>
+                                                <div>@schedule.TimeRange</div>
+                                            </div>
+                                            <small class="text-muted">@(location?.Name ?? "N/A")</small>
+                                        </div>
+                                    }
+                                    @if (thisWeekSchedules.Count > 3)
+                                    {
+                                        <div class="text-center mt-2">
+                                            <small class="text-muted">+@(thisWeekSchedules.Count - 3) more</small>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-3 text-muted">
+                                    <i class="bi bi-calendar-x" style="font-size: 2rem;"></i>
+                                    <p class="mb-0 mt-2 small">No schedules this week</p>
+                                </div>
+                            }
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between">
+                                <a href="@Url.Action("Create", new { date = startDate, userId = user.UserId })"
+                                   class="btn btn-sm btn-outline-success">
+                                    <i class="bi bi-plus"></i> Add
+                                </a>
+                                <a href="@Url.Action("EmployeeSchedule", new { userId = user.UserId, startDate = startDate })"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-calendar-check"></i> Manage
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else if (view == "week")
+    {
+        <!-- Week Grid View -->
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 150px;">Employee</th>
+                                @for (var date = startDate; date <= endDate; date = date.AddDays(1))
+                                {
+                                    <th class="text-center @(date.Date == DateTime.Now.Date ? "table-primary" : "")">
+                                        <div>@date.ToString("ddd")</div>
+                                        <div class="fw-normal">@date.ToString("M/d")</div>
+                                    </th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in users.Where(u => u.IsActive).OrderBy(u => u.FirstName))
+                            {
+                                var userSchedules = schedules.Where(s => s.UserId == user.UserId).ToList();
+                                <tr>
+                                    <td class="align-middle">
+                                        <strong>@user.FirstName @user.LastName</strong>
+                                        <br /><small class="text-muted">@user.Position</small>
+                                    </td>
+                                    @for (var date = startDate; date <= endDate; date = date.AddDays(1))
+                                    {
+                                        var daySchedules = userSchedules.Where(s => s.ScheduledDate.Date == date.Date).ToList();
+                                        <td class="@(date.Date == DateTime.Now.Date ? "table-primary" : "") p-2" style="vertical-align: top;">
+                                            @foreach (var schedule in daySchedules)
+                                            {
+                                                var location = locations.FirstOrDefault(l => l.LocationId == schedule.LocationId);
+                                                <div class="badge bg-success text-white mb-1 d-block text-start small"
+                                                     style="cursor: pointer;"
+                                                     onclick="window.location.href='@Url.Action("Edit", new { id = schedule.ScheduleId })'">
+                                                    <div>@schedule.StartTime?.ToString(@"h:mm tt") - @schedule.EndTime?.ToString(@"h:mm tt")</div>
+                                                    <small>@(location?.Name ?? "No location")</small>
+                                                </div>
+                                            }
+                                            @if (!daySchedules.Any())
+                                            {
+                                                <a href="@Url.Action("Create", new { date = date, userId = user.UserId })"
+                                                   class="btn btn-sm btn-outline-secondary w-100" style="font-size: 0.7rem;">
+                                                    <i class="bi bi-plus"></i>
+                                                </a>
+                                            }
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else if (view == "calendar")
+    {
+        <!-- Calendar View -->
+        <div class="card">
+            <div class="card-body">
+                <div class="row g-2">
+                    @{
+                        var firstDayOfWeek = startDate;
+                        // Show 4 weeks
+                        for (var week = 0; week < 4; week++)
+                        {
+                            <div class="col-12 mb-3">
+                                <h6 class="mb-2">Week @(week + 1)</h6>
+                                <div class="row g-2">
+                                    @for (var day = 0; day < 7; day++)
+                                    {
+                                        var currentDay = firstDayOfWeek.AddDays(week * 7 + day);
+                                        var isToday = currentDay.Date == DateTime.Now.Date;
+                                        var daySchedules = schedules.Where(s => s.ScheduledDate.Date == currentDay.Date).ToList();
+
+                                        <div class="col">
+                                            <div class="border rounded p-2 @(isToday ? "border-primary border-2 bg-primary bg-opacity-10" : "")"
+                                                 style="min-height: 120px;">
+                                                <div class="fw-bold mb-2">
+                                                    @currentDay.ToString("ddd")
+                                                    <br />@currentDay.ToString("M/d")
+                                                </div>
+                                                @foreach (var schedule in daySchedules.Take(3))
+                                                {
+                                                    var user = users.FirstOrDefault(u => u.UserId == schedule.UserId);
+                                                    <div class="badge bg-info text-dark mb-1 d-block text-start"
+                                                         style="font-size: 0.65rem; cursor: pointer;"
+                                                         onclick="window.location.href='@Url.Action("Edit", new { id = schedule.ScheduleId })'">
+                                                        @(user?.FirstName ?? "?") @schedule.StartTime?.ToString(@"h:mm")
+                                                    </div>
+                                                }
+                                                @if (daySchedules.Count > 3)
+                                                {
+                                                    <small class="text-muted">+@(daySchedules.Count - 3)</small>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .hover-shadow {
+        transition: box-shadow 0.3s ease;
+    }
+    .hover-shadow:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    .schedule-preview {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+</style>
