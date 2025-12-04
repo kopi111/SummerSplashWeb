@@ -151,6 +151,12 @@ namespace SummerSplashWeb.Services
         Task<int> AddChemicalReadingAsync(ChemicalReading reading);
         Task<int> AddPhotoAsync(Photo photo);
         Task<List<ServiceTechReport>> GetReportsByLocationAsync(int locationId, DateTime startDate, DateTime endDate);
+        // Site Evaluation methods
+        Task<SiteEvaluation?> GetSiteEvaluationByIdAsync(int evaluationId);
+        Task<int> CreateSiteEvaluationAsync(SiteEvaluation evaluation);
+        Task<bool> UpdateSiteEvaluationAsync(SiteEvaluation evaluation);
+        Task<bool> DeleteSiteEvaluationAsync(int evaluationId);
+        Task<List<SiteEvaluation>> GetSiteEvaluationsByTypeAsync(string evaluationType, DateTime startDate, DateTime endDate);
     }
 
     public class ReportService : IReportService
@@ -219,12 +225,10 @@ namespace SummerSplashWeb.Services
         {
             using var connection = _databaseService.CreateConnection();
             var sql = @"
-                SELECT sr.*, u.FirstName + ' ' + u.LastName AS TechName, jl.Name AS LocationName,
-                       cr.ClockInTime AS ServiceDate
+                SELECT sr.*, u.FirstName + ' ' + u.LastName AS UserName, jl.Name AS LocationName
                 FROM ServiceTechReports sr
                 INNER JOIN Users u ON sr.UserId = u.UserId
                 INNER JOIN JobLocations jl ON sr.LocationId = jl.LocationId
-                LEFT JOIN ClockRecords cr ON sr.ClockRecordId = cr.RecordId
                 WHERE sr.ReportId = @ReportId";
 
             return await connection.QueryFirstOrDefaultAsync<ServiceTechReport>(sql, new { ReportId = reportId });
@@ -234,9 +238,12 @@ namespace SummerSplashWeb.Services
         {
             using var connection = _databaseService.CreateConnection();
             var sql = @"
-                SELECT * FROM ChemicalReadings
+                SELECT ReadingId, ReportId, PoolType, ChlorineBromine, pH,
+                       CalciumHardness, Alkalinity AS TotalAlkalinity, CyanuricAcid,
+                       Salt, Phosphates, CreatedAt
+                FROM ChemicalReadings
                 WHERE ReportId = @ReportId
-                ORDER BY ReadingTime";
+                ORDER BY CreatedAt";
 
             var readings = await connection.QueryAsync<ChemicalReading>(sql, new { ReportId = reportId });
             return readings.ToList();
@@ -246,12 +253,12 @@ namespace SummerSplashWeb.Services
         {
             using var connection = _databaseService.CreateConnection();
             var sql = @"
-                SELECT sr.*, u.FirstName + ' ' + u.LastName AS TechName, jl.Name AS LocationName
+                SELECT sr.*, u.FirstName + ' ' + u.LastName AS UserName, jl.Name AS LocationName
                 FROM ServiceTechReports sr
-                INNER JOIN Users u ON sr.TechId = u.UserId
+                INNER JOIN Users u ON sr.UserId = u.UserId
                 INNER JOIN JobLocations jl ON sr.LocationId = jl.LocationId
-                WHERE sr.ServiceDate >= @StartDate AND sr.ServiceDate <= @EndDate
-                ORDER BY sr.ServiceDate DESC, sr.ServiceTime DESC";
+                WHERE sr.CreatedAt >= @StartDate AND sr.CreatedAt <= @EndDate
+                ORDER BY sr.CreatedAt DESC";
 
             var reports = await connection.QueryAsync<ServiceTechReport>(sql, new { StartDate = startDate, EndDate = endDate });
             return reports.ToList();
@@ -262,22 +269,22 @@ namespace SummerSplashWeb.Services
             using var connection = _databaseService.CreateConnection();
             var sql = @"
                 INSERT INTO ServiceTechReports (
-                    UserId, LocationId, ClockRecordId, ServiceDate, ClockInTime, ClockOutTime,
-                    PoolVacuumed, PoolBrushed, SkimmerBasketsEmptied, PumpBasketsEmptied,
-                    FilterCleaned, ChemicalsAdded, PoolDeckCleaned, EquipmentChecked,
-                    GateLocksChecked, SafetyEquipmentInspected, WaterLevelChecked, DebrisRemoved,
-                    TilesInspected, DrainCoversChecked, LightsChecked, SignageChecked,
-                    FurnitureArranged, RestroomsCleaned, PoolGateLocked,
-                    SuppliesNeeded, ReportSentTo, CustomerRating, CustomerFeedback, Notes, CreatedAt
+                    UserId, LocationId, ClockRecordId,
+                    PoolVacuumed, PoolBrushed, SkimmersEmpty, TilesCleaned,
+                    FurnitureArranged, CleanedStrainer, BackwashFilters, CleanedCartridges,
+                    EmptyTrash, BroomBucketHoseDeck, FurnitureOrganized, SkimWaterSurface,
+                    CalibratedChemicalController,
+                    Flowrate, FilterPressure, WaterTemp, ControllerORP, ControllerPH,
+                    Notes, CreatedAt
                 )
                 VALUES (
-                    @UserId, @LocationId, @ClockRecordId, @ServiceDate, @ClockInTime, @ClockOutTime,
-                    @PoolVacuumed, @PoolBrushed, @SkimmerBasketsEmptied, @PumpBasketsEmptied,
-                    @FilterCleaned, @ChemicalsAdded, @PoolDeckCleaned, @EquipmentChecked,
-                    @GateLocksChecked, @SafetyEquipmentInspected, @WaterLevelChecked, @DebrisRemoved,
-                    @TilesInspected, @DrainCoversChecked, @LightsChecked, @SignageChecked,
-                    @FurnitureArranged, @RestroomsCleaned, @PoolGateLocked,
-                    @SuppliesNeeded, @ReportSentTo, @CustomerRating, @CustomerFeedback, @Notes, @CreatedAt
+                    @UserId, @LocationId, @ClockRecordId,
+                    @PoolVacuumed, @PoolBrushed, @SkimmersEmpty, @TilesCleaned,
+                    @FurnitureArranged, @CleanedStrainer, @BackwashFilters, @CleanedCartridges,
+                    @EmptyTrash, @BroomBucketHoseDeck, @FurnitureOrganized, @SkimWaterSurface,
+                    @CalibratedChemicalController,
+                    @Flowrate, @FilterPressure, @WaterTemp, @ControllerORP, @ControllerPH,
+                    @Notes, @CreatedAt
                 );
                 SELECT CAST(SCOPE_IDENTITY() as int)";
 
@@ -332,11 +339,11 @@ namespace SummerSplashWeb.Services
             var sql = @"
                 INSERT INTO ChemicalReadings (
                     ReportId, PoolType, ChlorineBromine, pH, CalciumHardness,
-                    TotalAlkalinity, CyanuricAcid, Salt, Temperature, CreatedAt
+                    Alkalinity, CyanuricAcid, Salt, Phosphates, CreatedAt
                 )
                 VALUES (
                     @ReportId, @PoolType, @ChlorineBromine, @pH, @CalciumHardness,
-                    @TotalAlkalinity, @CyanuricAcid, @Salt, @Temperature, @CreatedAt
+                    @TotalAlkalinity, @CyanuricAcid, @Salt, @Phosphates, @CreatedAt
                 );
                 SELECT CAST(SCOPE_IDENTITY() as int)";
 
@@ -371,6 +378,102 @@ namespace SummerSplashWeb.Services
 
             var reports = await connection.QueryAsync<ServiceTechReport>(sql, new { LocationId = locationId, StartDate = startDate, EndDate = endDate });
             return reports.ToList();
+        }
+
+        // Site Evaluation methods
+        public async Task<SiteEvaluation?> GetSiteEvaluationByIdAsync(int evaluationId)
+        {
+            using var connection = _databaseService.CreateConnection();
+            var sql = @"
+                SELECT se.*, u.FirstName + ' ' + u.LastName AS UserName, jl.Name AS LocationName, jl.Address AS LocationAddress
+                FROM SiteEvaluations se
+                INNER JOIN Users u ON se.UserId = u.UserId
+                INNER JOIN JobLocations jl ON se.LocationId = jl.LocationId
+                WHERE se.EvaluationId = @EvaluationId";
+
+            return await connection.QueryFirstOrDefaultAsync<SiteEvaluation>(sql, new { EvaluationId = evaluationId });
+        }
+
+        public async Task<int> CreateSiteEvaluationAsync(SiteEvaluation evaluation)
+        {
+            using var connection = _databaseService.CreateConnection();
+            // Columns match the actual database schema from seed-site-evaluations
+            var sql = @"
+                INSERT INTO SiteEvaluations (
+                    UserId, LocationId, EvaluationType,
+                    PoolOpen, MainDrainVisible, AEDPresent, RescueTubePresent,
+                    BackboardPresent, FirstAidKit, BloodbornePathogenKit, HazMatKit,
+                    GateFenceSecured, EmergencyPhoneWorking,
+                    StaffOnDuty, ScanningRotationDiscussed, ZonesEstablished,
+                    BreakTimeDiscussed, GateControlDiscussed, CellphonePolicyDiscussed,
+                    PumproomCleaned, ClosingProceduresDiscussed,
+                    StaffWearingUniform, FacilityEntryProcedures, MSDS, SafetySuppliesNeeded,
+                    CreatedAt
+                )
+                VALUES (
+                    @UserId, @LocationId, @EvaluationType,
+                    @PoolOpen, @MainDrainVisible, @AEDPresent, @RescueTubePresent,
+                    @BackboardPresent, @FirstAidKit, @BloodbornePathogenKit, @HazMatKit,
+                    @GateFenceSecured, @EmergencyPhoneWorking,
+                    @StaffOnDuty, @ScanningRotationDiscussed, @ZonesEstablished,
+                    @BreakTimeDiscussed, @GateControlDiscussed, @CellphonePolicyDiscussed,
+                    @PumproomCleaned, @ClosingProceduresDiscussed,
+                    @StaffWearingUniform, @FacilityEntryProcedures, @MSDS, @SafetySuppliesNeeded,
+                    @CreatedAt
+                );
+                SELECT CAST(SCOPE_IDENTITY() as int)";
+
+            var evaluationId = await connection.ExecuteScalarAsync<int>(sql, evaluation);
+            return evaluationId;
+        }
+
+        public async Task<bool> UpdateSiteEvaluationAsync(SiteEvaluation evaluation)
+        {
+            using var connection = _databaseService.CreateConnection();
+            // Columns match the actual database schema
+            var sql = @"
+                UPDATE SiteEvaluations SET
+                    UserId = @UserId, LocationId = @LocationId, EvaluationType = @EvaluationType,
+                    PoolOpen = @PoolOpen, MainDrainVisible = @MainDrainVisible,
+                    AEDPresent = @AEDPresent, RescueTubePresent = @RescueTubePresent,
+                    BackboardPresent = @BackboardPresent, FirstAidKit = @FirstAidKit,
+                    BloodbornePathogenKit = @BloodbornePathogenKit, HazMatKit = @HazMatKit,
+                    GateFenceSecured = @GateFenceSecured, EmergencyPhoneWorking = @EmergencyPhoneWorking,
+                    StaffOnDuty = @StaffOnDuty, ScanningRotationDiscussed = @ScanningRotationDiscussed,
+                    ZonesEstablished = @ZonesEstablished, BreakTimeDiscussed = @BreakTimeDiscussed,
+                    GateControlDiscussed = @GateControlDiscussed, CellphonePolicyDiscussed = @CellphonePolicyDiscussed,
+                    PumproomCleaned = @PumproomCleaned,
+                    ClosingProceduresDiscussed = @ClosingProceduresDiscussed, StaffWearingUniform = @StaffWearingUniform,
+                    FacilityEntryProcedures = @FacilityEntryProcedures, MSDS = @MSDS,
+                    SafetySuppliesNeeded = @SafetySuppliesNeeded
+                WHERE EvaluationId = @EvaluationId";
+
+            var result = await connection.ExecuteAsync(sql, evaluation);
+            return result > 0;
+        }
+
+        public async Task<bool> DeleteSiteEvaluationAsync(int evaluationId)
+        {
+            using var connection = _databaseService.CreateConnection();
+            var sql = "DELETE FROM SiteEvaluations WHERE EvaluationId = @EvaluationId";
+            var result = await connection.ExecuteAsync(sql, new { EvaluationId = evaluationId });
+            return result > 0;
+        }
+
+        public async Task<List<SiteEvaluation>> GetSiteEvaluationsByTypeAsync(string evaluationType, DateTime startDate, DateTime endDate)
+        {
+            using var connection = _databaseService.CreateConnection();
+            var sql = @"
+                SELECT se.*, u.FirstName + ' ' + u.LastName AS UserName, jl.Name AS LocationName
+                FROM SiteEvaluations se
+                INNER JOIN Users u ON se.UserId = u.UserId
+                INNER JOIN JobLocations jl ON se.LocationId = jl.LocationId
+                WHERE se.EvaluationType = @EvaluationType
+                  AND se.CreatedAt >= @StartDate AND se.CreatedAt <= @EndDate
+                ORDER BY se.CreatedAt DESC";
+
+            var evals = await connection.QueryAsync<SiteEvaluation>(sql, new { EvaluationType = evaluationType, StartDate = startDate, EndDate = endDate });
+            return evals.ToList();
         }
     }
 

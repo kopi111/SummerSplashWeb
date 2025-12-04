@@ -59,11 +59,18 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label asp-for="ScheduledDate" class="form-label">
-                            <i class="bi bi-calendar-date me-1"></i>Date <span class="text-danger">*</span>
+                        <label class="form-label">
+                            <i class="bi bi-calendar-event me-1"></i>From Date <span class="text-danger">*</span>
                         </label>
-                        <input asp-for="ScheduledDate" type="date" class="form-control" value="@selectedDate.ToString("yyyy-MM-dd")" required />
-                        <span asp-validation-for="ScheduledDate" class="text-danger"></span>
+                        <input type="date" name="StartDateRange" id="startDateRange" class="form-control" value="@selectedDate.ToString("yyyy-MM-dd")" required />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            <i class="bi bi-calendar-event-fill me-1"></i>To Date <span class="text-danger">*</span>
+                        </label>
+                        <input type="date" name="EndDateRange" id="endDateRange" class="form-control" value="@selectedDate.ToString("yyyy-MM-dd")" required />
+                        <small class="text-muted" id="daysCountDisplay"></small>
                     </div>
 
                     <div class="col-md-6">
@@ -150,5 +157,27 @@
                 document.getElementById('hoursDisplay').style.display = 'none';
             }
         }
+
+        function updateDaysCount() {
+            const startDate = new Date(document.getElementById('startDateRange').value);
+            const endDate = new Date(document.getElementById('endDateRange').value);
+
+            if (startDate && endDate && endDate >= startDate) {
+                const diffTime = Math.abs(endDate - startDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                if (diffDays === 1) {
+                    document.getElementById('daysCountDisplay').textContent = '1 day will be scheduled';
+                } else {
+                    document.getElementById('daysCountDisplay').textContent = diffDays + ' days will be scheduled';
+                }
+            } else {
+                document.getElementById('daysCountDisplay').textContent = 'End date must be on or after start date';
+            }
+        }
+
+        // Add event listeners and run on page load
+        document.getElementById('startDateRange').addEventListener('change', updateDaysCount);
+        document.getElementById('endDateRange').addEventListener('change', updateDaysCount);
+        updateDaysCount(); // Run on page load
     </script>
 }

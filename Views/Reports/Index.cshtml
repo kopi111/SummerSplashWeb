@@ -1,269 +1,555 @@
 @model List<SummerSplashWeb.Models.ServiceTechReport>
 @{
-    ViewData["Title"] = "Service Reports";
+    ViewData["Title"] = "Reports";
+    var locations = ViewBag.Locations as List<SummerSplashWeb.Models.JobLocation> ?? new List<SummerSplashWeb.Models.JobLocation>();
+    var techs = ViewBag.Techs as List<SummerSplashWeb.Models.User> ?? new List<SummerSplashWeb.Models.User>();
+    var managerEvaluations = ViewBag.ManagerEvaluations as List<SummerSplashWeb.Models.SiteEvaluation> ?? new List<SummerSplashWeb.Models.SiteEvaluation>();
+    var supervisorEvaluations = ViewBag.SupervisorEvaluations as List<SummerSplashWeb.Models.SiteEvaluation> ?? new List<SummerSplashWeb.Models.SiteEvaluation>();
+    var safetyAudits = ViewBag.SafetyAudits as List<SummerSplashWeb.Models.SiteEvaluation> ?? new List<SummerSplashWeb.Models.SiteEvaluation>();
+    var reportType = ViewBag.ReportType as string ?? "ServiceTech";
 }
 
-@if (ViewBag.Error != null)
+@if (TempData["Success"] != null)
 {
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        @ViewBag.Error
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
+
+@if (TempData["Error"] != null || ViewBag.Error != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-circle me-2"></i>@(TempData["Error"] ?? ViewBag.Error)
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Report Type Tabs -->
+<div class="card mb-4" style="border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);">
+    <div class="card-body p-0">
+        <ul class="nav nav-tabs nav-fill" id="reportTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="serviceTech-tab" data-bs-toggle="tab" data-bs-target="#serviceTech" type="button" role="tab">
+                    <i class="bi bi-tools me-2"></i>Service Tech
+                    <span class="badge bg-primary ms-2">@Model.Count</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="supervisor-tab" data-bs-toggle="tab" data-bs-target="#supervisor" type="button" role="tab">
+                    <i class="bi bi-person-badge me-2"></i>Supervisor
+                    <span class="badge bg-info ms-2">@supervisorEvaluations.Count</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="manager-tab" data-bs-toggle="tab" data-bs-target="#manager" type="button" role="tab">
+                    <i class="bi bi-briefcase me-2"></i>Manager
+                    <span class="badge bg-success ms-2">@managerEvaluations.Count</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="safety-tab" data-bs-toggle="tab" data-bs-target="#safety" type="button" role="tab">
+                    <i class="bi bi-shield-check me-2"></i>Safety Audit
+                    <span class="badge bg-warning text-dark ms-2">@safetyAudits.Count</span>
+                </button>
+            </li>
+        </ul>
+    </div>
+</div>
 
 <!-- Filters -->
 <div class="card mb-4" style="border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);">
     <div class="card-body">
         <form method="get" asp-action="Index" class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">
-                    <i class="bi bi-calendar-range me-1"></i> Start Date
-                </label>
-                <input type="date"
-                       class="form-control"
-                       name="startDate"
-                       value="@ViewBag.StartDate">
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">
-                    <i class="bi bi-calendar-check me-1"></i> End Date
-                </label>
-                <input type="date"
-                       class="form-control"
-                       name="endDate"
-                       value="@ViewBag.EndDate">
-            </div>
-
             <div class="col-md-2">
-                <label class="form-label fw-semibold">
-                    <i class="bi bi-geo-alt me-1"></i> Location
-                </label>
-                <select class="form-select" name="locationId">
+                <label class="form-label small text-muted">Start Date</label>
+                <input type="date" name="startDate" class="form-control" value="@ViewBag.StartDate" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted">End Date</label>
+                <input type="date" name="endDate" class="form-control" value="@ViewBag.EndDate" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted">Location</label>
+                <select name="locationId" class="form-select">
                     <option value="">All Locations</option>
-                    @if (ViewBag.Locations != null)
+                    @foreach (var loc in locations)
                     {
-                        foreach (var loc in (List<SummerSplashWeb.Models.JobLocation>)ViewBag.Locations)
-                        {
-                            <option value="@loc.LocationId" selected="@(ViewBag.LocationId == loc.LocationId)">@loc.Name</option>
-                        }
+                        <option value="@loc.LocationId" selected="@(ViewBag.LocationId != null && (int?)ViewBag.LocationId == loc.LocationId)">@loc.Name</option>
                     }
                 </select>
             </div>
-
-            <div class="col-md-2">
-                <label class="form-label fw-semibold">
-                    <i class="bi bi-person me-1"></i> Technician
-                </label>
-                <select class="form-select" name="techId">
-                    <option value="">All Techs</option>
-                    @if (ViewBag.Techs != null)
+            <div class="col-md-3">
+                <label class="form-label small text-muted">Employee</label>
+                <select name="techId" class="form-select">
+                    <option value="">All Employees</option>
+                    @foreach (var tech in techs)
                     {
-                        foreach (var tech in (List<SummerSplashWeb.Models.User>)ViewBag.Techs)
-                        {
-                            <option value="@tech.UserId" selected="@(ViewBag.TechId == tech.UserId)">@tech.FirstName @tech.LastName</option>
-                        }
+                        <option value="@tech.UserId" selected="@(ViewBag.TechId != null && (int?)ViewBag.TechId == tech.UserId)">@tech.FirstName @tech.LastName</option>
                     }
                 </select>
             </div>
-
             <div class="col-md-2 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary w-100">
-                    <i class="bi bi-funnel me-1"></i> Filter
+                    <i class="bi bi-funnel me-1"></i>Filter
                 </button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Reports Table -->
-<div class="custom-table">
-    <div style="padding: 20px; border-bottom: 1px solid #f1f3f5; display: flex; justify-content: space-between; align-items: center;">
-        <h5 class="mb-0" style="color: #344767; font-weight: 700;">
-            <i class="bi bi-file-earmark-text me-2"></i>
-            Service Reports
-        </h5>
-        <span class="badge bg-primary" style="font-size: 14px;">@Model.Count reports</span>
+<!-- Tab Content -->
+<div class="tab-content" id="reportTabsContent">
+    <!-- Service Tech Reports -->
+    <div class="tab-pane fade show active" id="serviceTech" role="tabpanel">
+        <div class="custom-table">
+            <div style="padding: 20px; border-bottom: 1px solid #f1f3f5;">
+                <h5 class="mb-0" style="color: #344767; font-weight: 700;">
+                    <i class="bi bi-tools me-2"></i>Service Tech Checklist Reports
+                </h5>
+                <small class="text-muted">Pool maintenance checklists, chemical readings, and equipment logs</small>
+            </div>
+            @if (Model.Any())
+            {
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Technician</th>
+                            <th>Location</th>
+                            <th>Checklist</th>
+                            <th>Chemicals</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var report in Model.OrderByDescending(r => r.ServiceDate))
+                        {
+                            <tr class="clickable-row" style="cursor: pointer;" onclick="window.location.href='@Url.Action("Details", new { id = report.ReportId })'">
+                                <td>
+                                    <div class="fw-bold">@report.ServiceDate.ToString("MMM dd")</div>
+                                    <small class="text-muted">@report.ServiceDate.ToString("hh:mm tt")</small>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                            @(report.TechName?.Substring(0, 1).ToUpper() ?? "?")
+                                        </div>
+                                        <span class="fw-semibold">@report.TechName</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-info">@report.LocationName</span></td>
+                                <td>
+                                    <div class="progress" style="height: 20px; width: 80px;">
+                                        <div class="progress-bar @(report.ChecklistCompletionPercentage >= 80 ? "bg-success" : report.ChecklistCompletionPercentage >= 50 ? "bg-warning" : "bg-danger")"
+                                             style="width: @(report.ChecklistCompletionPercentage)%">
+                                            @(report.ChecklistCompletionPercentage)%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (report.ChemicalReadings != null && report.ChemicalReadings.Any())
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-check me-1"></i>Logged</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary"><i class="bi bi-eye"></i> View</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div style="padding: 60px; text-align: center; color: #7b809a;">
+                    <i class="bi bi-tools" style="font-size: 64px; opacity: 0.3;"></i>
+                    <p class="mt-3 mb-0">No service tech reports found</p>
+                </div>
+            }
+        </div>
     </div>
 
-    @if (Model.Any())
-    {
-        <table class="table mb-0">
-            <thead>
-                <tr>
-                    <th>Report #</th>
-                    <th>Date</th>
-                    <th>Technician</th>
-                    <th>Location</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var report in Model.OrderByDescending(r => r.ServiceDate))
-                {
-                    <tr>
-                        <td>
-                            <div style="font-weight: 600; color: #344767;">
-                                #@report.ReportId
-                            </div>
-                        </td>
-                        <td>
-                            <small class="text-muted">
-                                <i class="bi bi-calendar me-1"></i>
-                                @report.ServiceDate.ToString("MMM dd, yyyy")
-                            </small>
-                        </td>
-                        <td>
-                            <div style="font-weight: 600; color: #344767;">
-                                @report.TechName
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge bg-info">@report.LocationName</span>
-                        </td>
-                        <td>
-                            @if (report.ServiceType == "Routine")
-                            {
-                                <span class="badge bg-primary">
-                                    <i class="bi bi-arrow-repeat me-1"></i>Routine
-                                </span>
-                            }
-                            else if (report.ServiceType == "Emergency")
-                            {
-                                <span class="badge bg-danger">
-                                    <i class="bi bi-exclamation-triangle me-1"></i>Emergency
-                                </span>
-                            }
-                            else if (report.ServiceType == "Maintenance")
-                            {
-                                <span class="badge bg-warning">
-                                    <i class="bi bi-wrench me-1"></i>Maintenance
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">@report.ServiceType</span>
-                            }
-                        </td>
-                        <td>
-                            <span class="badge bg-success">
-                                <i class="bi bi-check-circle me-1"></i>Completed
-                            </span>
-                        </td>
-                        <td>
-                            <a href="@Url.Action("Details", new { id = report.ReportId })"
-                               class="btn btn-sm btn-primary">
-                                <i class="bi bi-eye me-1"></i>View
-                            </a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-    else
-    {
-        <div style="padding: 60px; text-align: center; color: #7b809a;">
-            <i class="bi bi-file-earmark-text" style="font-size: 64px; opacity: 0.3;"></i>
-            <p class="mt-3 mb-0">No reports found</p>
-            <small class="text-muted">Try adjusting your date range or filters</small>
+    <!-- Supervisor Evaluations -->
+    <div class="tab-pane fade" id="supervisor" role="tabpanel">
+        <div class="custom-table">
+            <div style="padding: 20px; border-bottom: 1px solid #f1f3f5;">
+                <h5 class="mb-0" style="color: #344767; font-weight: 700;">
+                    <i class="bi bi-person-badge me-2"></i>Supervisor Site Evaluations
+                </h5>
+                <small class="text-muted">Staff operations, safety equipment, and daily procedures</small>
+            </div>
+            @if (supervisorEvaluations.Any())
+            {
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Supervisor</th>
+                            <th>Location</th>
+                            <th>Safety</th>
+                            <th>Staff Checks</th>
+                            <th>Notes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var eval in supervisorEvaluations.OrderByDescending(e => e.CreatedAt))
+                        {
+                            <tr class="clickable-row" style="cursor: pointer;" onclick="window.location.href='@Url.Action("EvaluationDetails", new { id = eval.EvaluationId })'">
+                                <td>
+                                    <div class="fw-bold">@eval.CreatedAt.ToString("MMM dd")</div>
+                                    <small class="text-muted">@eval.CreatedAt.ToString("hh:mm tt")</small>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                            @(eval.UserName?.Substring(0, 1).ToUpper() ?? "?")
+                                        </div>
+                                        <span class="fw-semibold">@eval.UserName</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-primary">@eval.LocationName</span></td>
+                                <td>
+                                    <div class="progress" style="height: 20px; width: 80px;">
+                                        <div class="progress-bar @(eval.SafetyCompliancePercentage >= 80 ? "bg-success" : "bg-warning")"
+                                             style="width: @(eval.SafetyCompliancePercentage)%">
+                                            @(eval.SafetyCompliancePercentage)%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 20px; width: 80px;">
+                                        <div class="progress-bar bg-info" style="width: @(eval.SupervisorChecklistPercentage)%">
+                                            @(eval.SupervisorChecklistPercentage)%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(eval.SafetyConcernsNotes))
+                                    {
+                                        <span class="badge bg-warning text-dark" title="@eval.SafetyConcernsNotes"><i class="bi bi-exclamation-triangle"></i></span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-check"></i></span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-info"><i class="bi bi-eye"></i> View</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div style="padding: 60px; text-align: center; color: #7b809a;">
+                    <i class="bi bi-person-badge" style="font-size: 64px; opacity: 0.3;"></i>
+                    <p class="mt-3 mb-0">No supervisor evaluations found</p>
+                </div>
+            }
         </div>
-    }
+    </div>
+
+    <!-- Manager Evaluations -->
+    <div class="tab-pane fade" id="manager" role="tabpanel">
+        <div class="custom-table">
+            <div style="padding: 20px; border-bottom: 1px solid #f1f3f5;">
+                <h5 class="mb-0" style="color: #344767; font-weight: 700;">
+                    <i class="bi bi-briefcase me-2"></i>Manager Site Evaluations
+                </h5>
+                <small class="text-muted">Staff uniforms, safety compliance, and facility inspections</small>
+            </div>
+            @if (managerEvaluations.Any())
+            {
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Manager</th>
+                            <th>Location</th>
+                            <th>Safety</th>
+                            <th>Uniform</th>
+                            <th>Pool</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var eval in managerEvaluations.OrderByDescending(e => e.CreatedAt))
+                        {
+                            <tr class="clickable-row" style="cursor: pointer;" onclick="window.location.href='@Url.Action("EvaluationDetails", new { id = eval.EvaluationId })'">
+                                <td>
+                                    <div class="fw-bold">@eval.CreatedAt.ToString("MMM dd")</div>
+                                    <small class="text-muted">@eval.CreatedAt.ToString("hh:mm tt")</small>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                            @(eval.UserName?.Substring(0, 1).ToUpper() ?? "?")
+                                        </div>
+                                        <span class="fw-semibold">@eval.UserName</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-primary">@eval.LocationName</span></td>
+                                <td>
+                                    <div class="progress" style="height: 20px; width: 80px;">
+                                        <div class="progress-bar @(eval.SafetyCompliancePercentage >= 80 ? "bg-success" : "bg-warning")"
+                                             style="width: @(eval.SafetyCompliancePercentage)%">
+                                            @(eval.SafetyCompliancePercentage)%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (eval.StaffWearingUniform == true)
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Yes</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger"><i class="bi bi-x-circle"></i> No</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (eval.PoolOpen == true)
+                                    {
+                                        <span class="badge bg-success">Open</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Closed</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-success"><i class="bi bi-eye"></i> View</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div style="padding: 60px; text-align: center; color: #7b809a;">
+                    <i class="bi bi-briefcase" style="font-size: 64px; opacity: 0.3;"></i>
+                    <p class="mt-3 mb-0">No manager evaluations found</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Safety Audits -->
+    <div class="tab-pane fade" id="safety" role="tabpanel">
+        <div class="custom-table">
+            <div style="padding: 20px; border-bottom: 1px solid #f1f3f5;">
+                <h5 class="mb-0" style="color: #344767; font-weight: 700;">
+                    <i class="bi bi-shield-check me-2"></i>Safety Audit Evaluations
+                </h5>
+                <small class="text-muted">AED, first aid, MSDS, and safety equipment inspections</small>
+            </div>
+            @if (safetyAudits.Any())
+            {
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Auditor</th>
+                            <th>Location</th>
+                            <th>Pool</th>
+                            <th>Safety Score</th>
+                            <th>AED</th>
+                            <th>First Aid</th>
+                            <th>Issues</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var eval in safetyAudits.OrderByDescending(e => e.CreatedAt))
+                        {
+                            <tr class="clickable-row" style="cursor: pointer;" onclick="window.location.href='@Url.Action("EvaluationDetails", new { id = eval.EvaluationId })'">
+                                <td>
+                                    <div class="fw-bold">@eval.CreatedAt.ToString("MMM dd")</div>
+                                    <small class="text-muted">@eval.CreatedAt.ToString("hh:mm tt")</small>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-2">
+                                            @(eval.UserName?.Substring(0, 1).ToUpper() ?? "?")
+                                        </div>
+                                        <span class="fw-semibold">@eval.UserName</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-primary">@eval.LocationName</span></td>
+                                <td>
+                                    @if (eval.PoolOpen == true)
+                                    {
+                                        <span class="badge bg-success">Open</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Closed</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 20px; width: 80px;">
+                                        <div class="progress-bar @(eval.SafetyCompliancePercentage >= 80 ? "bg-success" : eval.SafetyCompliancePercentage >= 50 ? "bg-warning" : "bg-danger")"
+                                             style="width: @(eval.SafetyCompliancePercentage)%">
+                                            @(eval.SafetyCompliancePercentage)%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (eval.AEDPresent == true)
+                                    {
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-x-circle-fill text-danger"></i>
+                                    }
+                                </td>
+                                <td>
+                                    @if (eval.FirstAidKit == true)
+                                    {
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-x-circle-fill text-danger"></i>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(eval.SafetyConcernsNotes))
+                                    {
+                                        <span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i>Issues</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-check me-1"></i>Clear</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary"><i class="bi bi-eye"></i> View</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div style="padding: 60px; text-align: center; color: #7b809a;">
+                    <i class="bi bi-shield-check" style="font-size: 64px; opacity: 0.3;"></i>
+                    <p class="mt-3 mb-0">No safety audits found</p>
+                </div>
+            }
+        </div>
+    </div>
 </div>
 
-@if (Model.Any())
-{
-    <!-- Summary Cards -->
-    <div class="row g-4 mt-4">
-        <div class="col-md-3">
-            <div class="stat-card primary">
-                <div class="stat-header">
-                    <div>
-                        <div class="stat-value">@Model.Count</div>
-                        <div class="stat-label">Total Reports</div>
-                    </div>
-                    <div class="stat-icon primary">
-                        <i class="bi bi-file-text-fill"></i>
-                    </div>
+<!-- Summary Stats -->
+<div class="row g-4 mt-4">
+    <div class="col-md-3">
+        <div class="stat-card primary">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-value">@Model.Count</div>
+                    <div class="stat-label">Service Tech</div>
                 </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="stat-card success">
-                <div class="stat-header">
-                    <div>
-                        <div class="stat-value">@Model.Count(r => r.ServiceType == "Routine")</div>
-                        <div class="stat-label">Routine Services</div>
-                    </div>
-                    <div class="stat-icon success">
-                        <i class="bi bi-arrow-repeat"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="stat-card danger">
-                <div class="stat-header">
-                    <div>
-                        <div class="stat-value">@Model.Count(r => r.ServiceType == "Emergency")</div>
-                        <div class="stat-label">Emergency Calls</div>
-                    </div>
-                    <div class="stat-icon danger">
-                        <i class="bi bi-exclamation-triangle-fill"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="stat-card info">
-                <div class="stat-header">
-                    <div>
-                        <div class="stat-value">@Model.Select(r => r.LocationId).Distinct().Count()</div>
-                        <div class="stat-label">Locations Serviced</div>
-                    </div>
-                    <div class="stat-icon info">
-                        <i class="bi bi-geo-alt-fill"></i>
-                    </div>
+                <div class="stat-icon primary">
+                    <i class="bi bi-tools"></i>
                 </div>
             </div>
         </div>
     </div>
-}
+    <div class="col-md-3">
+        <div class="stat-card info">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-value">@supervisorEvaluations.Count</div>
+                    <div class="stat-label">Supervisor</div>
+                </div>
+                <div class="stat-icon info">
+                    <i class="bi bi-person-badge"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card success">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-value">@managerEvaluations.Count</div>
+                    <div class="stat-label">Manager</div>
+                </div>
+                <div class="stat-icon success">
+                    <i class="bi bi-briefcase"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card warning">
+            <div class="stat-header">
+                <div>
+                    <div class="stat-value">@safetyAudits.Count</div>
+                    <div class="stat-label">Safety Audit</div>
+                </div>
+                <div class="stat-icon warning">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
+    .nav-tabs {
+        border-bottom: none;
+    }
+    .nav-tabs .nav-link {
+        color: #7b809a;
+        border: none;
+        padding: 18px 20px;
+        font-weight: 600;
+        border-radius: 0;
+        transition: all 0.3s;
+    }
+    .nav-tabs .nav-link.active {
+        color: #667eea;
+        border-bottom: 3px solid #667eea;
+        background: transparent;
+    }
+    .nav-tabs .nav-link:hover:not(.active) {
+        color: #344767;
+        background: rgba(102, 126, 234, 0.05);
+    }
+    .avatar-sm {
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+        font-weight: 600;
+    }
     .btn-primary {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
-        border-radius: 8px;
-        padding: 8px 16px;
-        font-weight: 600;
-        transition: transform 0.2s, box-shadow 0.2s;
     }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    }
-
     .form-control, .form-select {
         border: 2px solid #e9ecef;
         border-radius: 8px;
-        padding: 10px 14px;
-        transition: all 0.3s;
     }
-
     .form-control:focus, .form-select:focus {
         border-color: #667eea;
         box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
     }
-
-    .card {
-        border: none !important;
+    .clickable-row:hover {
+        background-color: #f8f9fa;
+        transition: background-color 0.2s;
     }
 </style>

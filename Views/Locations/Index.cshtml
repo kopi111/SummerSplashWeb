@@ -64,8 +64,16 @@
                                     <td>
                                         <strong>@location.Name</strong>
                                     </td>
-                                    <td>@location.Address</td>
-                                    <td>@location.City, @location.State @location.ZipCode</td>
+                                    <td style="max-width: 200px; word-wrap: break-word; white-space: normal;">
+                                        @location.Address
+                                    </td>
+                                    <td style="white-space: nowrap;">
+                                        @location.City, @location.State @location.ZipCode
+                                        @if (!string.IsNullOrEmpty(location.Country))
+                                        {
+                                            <br /><small class="text-muted">@location.Country</small>
+                                        }
+                                    </td>
                                     <td>
                                         <span class="badge bg-info">@(location.PoolType ?? "N/A")</span>
                                     </td>

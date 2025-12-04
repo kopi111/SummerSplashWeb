@@ -1,0 +1,541 @@
+@model SummerSplashWeb.Models.JobLocation
+@{
+    ViewData["Title"] = "Add Location";
+}
+
+<div class="content-area">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1"><i class="bi bi-geo-alt-fill me-2"></i>Add New Location</h2>
+            <p class="text-muted mb-0">Create a new pool service location</p>
+        </div>
+        <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Locations
+        </a>
+    </div>
+
+    <form asp-action="Create" method="post" id="locationForm">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+        <div class="row">
+            <!-- Left Column - Form Fields -->
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-building me-2"></i>Location Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">
+                                Location Name <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Name" class="form-control" placeholder="Enter location name" required />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-search me-1"></i>Search Address <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" id="addressSearch" class="form-control"
+                                   placeholder="Start typing to search for an address..." autocomplete="off" />
+                            <small class="text-muted">Type to get address suggestions (US only)</small>
+                            <div id="addressValidationError" class="text-danger mt-1" style="display: none;">
+                                Please select a valid US address from the suggestions.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Address" class="form-label">Street Address</label>
+                            <input asp-for="Address" class="form-control" id="streetAddress" readonly
+                                   style="background-color: #f8f9fa;" />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="City" class="form-label">City</label>
+                                <input asp-for="City" class="form-control" id="city" readonly
+                                       style="background-color: #f8f9fa;" />
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label asp-for="State" class="form-label">State</label>
+                                <input asp-for="State" class="form-control" id="state" readonly
+                                       style="background-color: #f8f9fa;" />
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label asp-for="ZipCode" class="form-label">Zip Code</label>
+                                <input asp-for="ZipCode" class="form-control" id="zipCode" readonly
+                                       style="background-color: #f8f9fa;" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Country" class="form-label">Country</label>
+                            <input asp-for="Country" class="form-control" id="country" value="USA" readonly
+                                   style="background-color: #f8f9fa;" />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Latitude" class="form-label">Latitude</label>
+                                <input asp-for="Latitude" type="text" class="form-control" id="latitude" readonly
+                                       style="background-color: #f8f9fa;" placeholder="Auto-filled from map" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Longitude" class="form-label">Longitude</label>
+                                <input asp-for="Longitude" type="text" class="form-control" id="longitude" readonly
+                                       style="background-color: #f8f9fa;" placeholder="Auto-filled from map" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Radius" class="form-label">
+                                <i class="bi bi-bullseye me-1"></i>Geofence Radius (meters)
+                            </label>
+                            <div class="input-group">
+                                <input asp-for="Radius" type="number" class="form-control" id="radius"
+                                       min="10" max="500" value="100" />
+                                <span class="input-group-text">meters</span>
+                            </div>
+                            <small class="text-muted">Set the radius for employee clock-in geofence (10-500 meters)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-water me-2"></i>Pool Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PoolType" class="form-label">Pool Type</label>
+                                <select asp-for="PoolType" class="form-select">
+                                    <option value="">Select Type</option>
+                                    <option value="Community">Community</option>
+                                    <option value="Private">Private</option>
+                                    <option value="Commercial">Commercial</option>
+                                    <option value="Municipal">Municipal</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PoolSize" class="form-label">Pool Size</label>
+                                <select asp-for="PoolSize" class="form-select">
+                                    <option value="">Select Size</option>
+                                    <option value="Small">Small</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Large">Large</option>
+                                    <option value="Olympic">Olympic</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="bi bi-person-lines-fill me-2"></i>Contact Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="ContactName" class="form-label">Contact Name</label>
+                            <input asp-for="ContactName" class="form-control" placeholder="Primary contact name" />
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ContactPhone" class="form-label">Phone</label>
+                                <input asp-for="ContactPhone" class="form-control" type="tel" placeholder="(555) 555-5555" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ContactEmail" class="form-label">Email</label>
+                                <input asp-for="ContactEmail" class="form-control" type="email" placeholder="contact@example.com" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="Notes" class="form-label">Notes</label>
+                            <textarea asp-for="Notes" class="form-control" rows="3"
+                                      placeholder="Any additional notes about this location..."></textarea>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input asp-for="IsActive" class="form-check-input" type="checkbox" checked />
+                            <label asp-for="IsActive" class="form-check-label">Active Location</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Map -->
+            <div class="col-lg-6">
+                <div class="card sticky-top" style="top: 20px;">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-map me-2"></i>Location Map</h5>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="satelliteToggle"
+                                   style="width: 2.5em; height: 1.25em;">
+                            <label class="form-check-label text-white" for="satelliteToggle">Satellite View</label>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="map" style="height: 400px; width: 100%;"></div>
+                        <div class="p-3 bg-light border-top">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-info-circle text-primary me-1"></i>
+                                    <small class="text-muted">Click on the map or drag the marker to set the exact pool location</small>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="centerOnMarker">
+                                    <i class="bi bi-crosshair"></i> Center
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div id="selectedAddress" class="mb-2" style="word-wrap: break-word;">
+                            <strong>Selected Address:</strong>
+                            <span id="displayAddress" class="text-muted">No address selected</span>
+                        </div>
+                        <div id="radiusDisplay">
+                            <strong>Geofence Radius:</strong>
+                            <span id="displayRadius">100</span> meters
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle me-1"></i>Cancel
+            </a>
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+                <i class="bi bi-check-circle me-1"></i>Create Location
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        .suggestions-container {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        .suggestion-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .suggestion-item:hover {
+            background-color: #f8f9fa;
+        }
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        .address-search-wrapper {
+            position: relative;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let map;
+        let marker;
+        let circle;
+        let addressValidated = false;
+        let searchTimeout;
+        let currentLayer = 'street';
+
+        // Initialize map when DOM is ready
+        document.addEventListener('DOMContentLoaded', initMap);
+
+        function initMap() {
+            // Default center (US center)
+            const usCenter = [39.8283, -98.5795];
+
+            // Create map
+            map = L.map('map', {
+                center: usCenter,
+                zoom: 4,
+                minZoom: 3,
+                maxZoom: 19
+            });
+
+            // Street layer (OpenStreetMap)
+            const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            });
+
+            // Satellite layer (Esri)
+            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '© Esri',
+                maxZoom: 19
+            });
+
+            streetLayer.addTo(map);
+
+            // Create marker (hidden initially)
+            marker = L.marker(usCenter, {
+                draggable: true,
+                opacity: 0
+            }).addTo(map);
+
+            // Create radius circle (hidden initially)
+            circle = L.circle(usCenter, {
+                radius: 100,
+                fillColor: '#667eea',
+                fillOpacity: 0.2,
+                color: '#667eea',
+                weight: 2,
+                opacity: 0
+            }).addTo(map);
+
+            // Marker drag event
+            marker.on('dragend', function(e) {
+                const latlng = e.target.getLatLng();
+                updateLocationFromCoords(latlng.lat, latlng.lng);
+            });
+
+            // Map click event
+            map.on('click', function(e) {
+                placeMarker(e.latlng.lat, e.latlng.lng);
+                updateLocationFromCoords(e.latlng.lat, e.latlng.lng);
+            });
+
+            // Satellite toggle
+            document.getElementById('satelliteToggle').addEventListener('change', function() {
+                if (this.checked) {
+                    map.removeLayer(streetLayer);
+                    satelliteLayer.addTo(map);
+                    currentLayer = 'satellite';
+                } else {
+                    map.removeLayer(satelliteLayer);
+                    streetLayer.addTo(map);
+                    currentLayer = 'street';
+                }
+            });
+
+            // Radius change
+            document.getElementById('radius').addEventListener('input', function() {
+                const radius = parseInt(this.value) || 100;
+                circle.setRadius(radius);
+                document.getElementById('displayRadius').textContent = radius;
+            });
+
+            // Center on marker button
+            document.getElementById('centerOnMarker').addEventListener('click', function() {
+                if (marker.options.opacity > 0) {
+                    map.setView(marker.getLatLng(), 17);
+                }
+            });
+
+            // Setup address search with suggestions
+            setupAddressSearch();
+        }
+
+        function setupAddressSearch() {
+            const input = document.getElementById('addressSearch');
+            const wrapper = input.parentElement;
+            wrapper.classList.add('address-search-wrapper');
+
+            // Create suggestions container
+            const suggestionsDiv = document.createElement('div');
+            suggestionsDiv.className = 'suggestions-container';
+            suggestionsDiv.id = 'addressSuggestions';
+            wrapper.appendChild(suggestionsDiv);
+
+            input.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const query = this.value.trim();
+
+                if (query.length < 3) {
+                    suggestionsDiv.style.display = 'none';
+                    return;
+                }
+
+                searchTimeout = setTimeout(() => {
+                    searchAddress(query);
+                }, 300);
+            });
+
+            input.addEventListener('blur', function() {
+                setTimeout(() => {
+                    suggestionsDiv.style.display = 'none';
+                }, 200);
+            });
+        }
+
+        function searchAddress(query) {
+            const suggestionsDiv = document.getElementById('addressSuggestions');
+
+            // Use Nominatim for geocoding (free, no API key needed)
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=us&limit=5&addressdetails=1`)
+                .then(response => response.json())
+                .then(results => {
+                    suggestionsDiv.innerHTML = '';
+
+                    if (results.length === 0) {
+                        suggestionsDiv.innerHTML = '<div class="suggestion-item text-muted">No results found</div>';
+                        suggestionsDiv.style.display = 'block';
+                        return;
+                    }
+
+                    results.forEach(result => {
+                        const div = document.createElement('div');
+                        div.className = 'suggestion-item';
+                        div.textContent = result.display_name;
+                        div.addEventListener('click', () => selectAddress(result));
+                        suggestionsDiv.appendChild(div);
+                    });
+
+                    suggestionsDiv.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    suggestionsDiv.style.display = 'none';
+                });
+        }
+
+        function selectAddress(result) {
+            const suggestionsDiv = document.getElementById('addressSuggestions');
+            suggestionsDiv.style.display = 'none';
+
+            document.getElementById('addressSearch').value = result.display_name;
+            document.getElementById('addressValidationError').style.display = 'none';
+            addressValidated = true;
+
+            const addr = result.address || {};
+
+            // Build street address
+            let streetAddress = '';
+            if (addr.house_number) streetAddress += addr.house_number + ' ';
+            if (addr.road) streetAddress += addr.road;
+
+            // Fill form fields
+            document.getElementById('streetAddress').value = streetAddress.trim();
+            document.getElementById('city').value = addr.city || addr.town || addr.village || addr.municipality || '';
+            document.getElementById('state').value = addr.state || '';
+            document.getElementById('zipCode').value = addr.postcode || '';
+            document.getElementById('country').value = 'USA';
+            document.getElementById('latitude').value = parseFloat(result.lat).toFixed(6);
+            document.getElementById('longitude').value = parseFloat(result.lon).toFixed(6);
+
+            // Update map
+            const lat = parseFloat(result.lat);
+            const lng = parseFloat(result.lon);
+            placeMarker(lat, lng);
+            map.setView([lat, lng], 17);
+
+            updateAddressDisplay();
+        }
+
+        function placeMarker(lat, lng) {
+            marker.setLatLng([lat, lng]);
+            marker.setOpacity(1);
+            circle.setLatLng([lat, lng]);
+            circle.setStyle({ opacity: 1, fillOpacity: 0.2 });
+        }
+
+        function updateLocationFromCoords(lat, lng) {
+            document.getElementById('latitude').value = lat.toFixed(6);
+            document.getElementById('longitude').value = lng.toFixed(6);
+            circle.setLatLng([lat, lng]);
+
+            // Reverse geocode using Nominatim
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`)
+                .then(response => response.json())
+                .then(result => {
+                    if (result && result.address) {
+                        document.getElementById('addressSearch').value = result.display_name;
+
+                        const addr = result.address;
+                        let streetAddress = '';
+                        if (addr.house_number) streetAddress += addr.house_number + ' ';
+                        if (addr.road) streetAddress += addr.road;
+
+                        document.getElementById('streetAddress').value = streetAddress.trim();
+                        document.getElementById('city').value = addr.city || addr.town || addr.village || addr.municipality || '';
+                        document.getElementById('state').value = addr.state || '';
+                        document.getElementById('zipCode').value = addr.postcode || '';
+
+                        addressValidated = true;
+                        updateAddressDisplay();
+                    }
+                })
+                .catch(error => console.error('Reverse geocode error:', error));
+        }
+
+        function updateAddressDisplay() {
+            const address = document.getElementById('streetAddress').value;
+            const city = document.getElementById('city').value;
+            const state = document.getElementById('state').value;
+            const zipCode = document.getElementById('zipCode').value;
+            const country = document.getElementById('country').value;
+
+            const fullAddress = [address, city, state, zipCode, country].filter(Boolean).join(', ');
+            document.getElementById('displayAddress').textContent = fullAddress || 'No address selected';
+            document.getElementById('displayAddress').className = fullAddress ? 'text-success' : 'text-muted';
+        }
+
+        // Form validation
+        document.getElementById('locationForm').addEventListener('submit', function(e) {
+            const lat = document.getElementById('latitude').value;
+            const lng = document.getElementById('longitude').value;
+            const address = document.getElementById('streetAddress').value;
+
+            if (!lat || !lng || !address) {
+                e.preventDefault();
+                document.getElementById('addressValidationError').style.display = 'block';
+                document.getElementById('addressValidationError').textContent =
+                    'Please select a valid address from the map or search suggestions.';
+                return false;
+            }
+
+            document.getElementById('addressValidationError').style.display = 'none';
+            return true;
+        });
+    </script>
+}
+
+<style>
+    .sticky-top {
+        z-index: 100;
+    }
+
+    #addressSearch {
+        font-size: 1rem;
+    }
+
+    .pac-container {
+        z-index: 10000 !important;
+        font-family: inherit;
+    }
+
+    .pac-item {
+        padding: 8px 10px;
+        cursor: pointer;
+    }
+
+    .pac-item:hover {
+        background-color: #f8f9fa;
+    }
+</style>

@@ -52,6 +52,29 @@ namespace SummerSplashWeb.Controllers.Api
         #region Authentication
 
         /// <summary>
+        /// Quick approve a user by email (for testing)
+        /// </summary>
+        [HttpPost("approve-user")]
+        public async Task<IActionResult> ApproveUser([FromBody] ApproveUserRequest request)
+        {
+            try
+            {
+                using var connection = _databaseService.CreateConnection();
+                var sql = "UPDATE Users SET IsApproved = 1, IsActive = 1, Position = @Position WHERE Email = @Email";
+                var result = await connection.ExecuteAsync(sql, new { Email = request.Email, Position = request.Position ?? "Manager" });
+
+                if (result > 0)
+                    return Ok(new { success = true, message = $"User {request.Email} approved successfully" });
+                else
+                    return NotFound(new { success = false, message = "User not found" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        /// <summary>
         /// Register a new user
         /// </summary>
         /// <param name="request">Registration details including name, email, and password</param>
@@ -830,6 +853,51 @@ namespace SummerSplashWeb.Controllers.Api
         #region Clock In/Out
 
         /// <summary>
+        /// Get all currently active shifts (employees clocked in)
+        /// </summary>
+        /// <returns>List of active shifts with employee and location info</returns>
+        [HttpGet("clock/active")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetActiveShifts()
+        {
+            try
+            {
+                using var connection = _databaseService.CreateConnection();
+                var sql = @"
+                    SELECT cr.*,
+                           u.FirstName + ' ' + u.LastName AS UserName,
+                           jl.Name AS LocationName
+                    FROM ClockRecords cr
+                    INNER JOIN Users u ON cr.UserId = u.UserId
+                    INNER JOIN JobLocations jl ON cr.LocationId = jl.LocationId
+                    WHERE cr.ClockOutTime IS NULL
+                    ORDER BY cr.ClockInTime DESC";
+
+                var shifts = await connection.QueryAsync<ClockRecord>(sql);
+
+                return Ok(new
+                {
+                    success = true,
+                    shifts = shifts.Select(s => new
+                    {
+                        recordId = s.RecordId,
+                        userId = s.UserId,
+                        userName = s.UserName,
+                        locationId = s.LocationId,
+                        locationName = s.LocationName,
+                        clockInTime = s.ClockInTime,
+                        notes = s.JobsiteNotes
+                    })
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get active shifts");
+                return Ok(new { success = true, shifts = new List<object>() });
+            }
+        }
+
+        /// <summary>
         /// Clock in for a shift
         /// </summary>
         /// <param name="request">Clock in request with user ID and location ID</param>
@@ -1293,6 +1361,12 @@ namespace SummerSplashWeb.Controllers.Api
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         public string? Phone { get; set; }
+    }
+
+    public class ApproveUserRequest
+    {
+        public string Email { get; set; } = string.Empty;
+        public string? Position { get; set; }
     }
 
     public class LoginRequest

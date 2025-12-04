@@ -24,10 +24,11 @@ namespace SummerSplashWeb.Models
         public DateTime? VerificationCodeExpiry { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
+        public string Status { get; set; } = "Pending"; // Approved, Pending, Terminated
 
         public string FullName => $"{FirstName} {LastName}";
         public string DisplayPosition => Position ?? "Not Assigned";
-        public string StatusText => IsApproved ? (IsActive ? "Active" : "Inactive") : "Pending Approval";
+        public string StatusText => Status ?? (IsApproved ? (IsActive ? "Approved" : "Terminated") : "Pending");
     }
 
     public enum UserPosition

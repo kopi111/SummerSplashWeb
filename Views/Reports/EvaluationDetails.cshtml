@@ -1,0 +1,365 @@
+@model SummerSplashWeb.Models.SiteEvaluation
+@{
+    ViewData["Title"] = "Evaluation Details";
+}
+
+<div class="mb-3">
+    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Back to Reports
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Evaluation Header Card -->
+    <div class="col-12">
+        <div class="card" style="border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);">
+            <div class="card-header" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border-radius: 15px 15px 0 0;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-check me-2"></i>@Model.EvaluationType Evaluation #@Model.EvaluationId
+                    </h5>
+                    <span class="badge bg-light text-dark" style="font-size: 14px;">
+                        @Model.EvaluationDate.ToString("MMMM dd, yyyy")
+                    </span>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <small class="text-muted d-block mb-1">
+                            <i class="bi bi-person me-2"></i>Evaluator
+                        </small>
+                        <div style="font-weight: 600; color: #344767; font-size: 16px;">
+                            @(Model.UserName ?? "Unknown")
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <small class="text-muted d-block mb-1">
+                            <i class="bi bi-geo-alt me-2"></i>Location
+                        </small>
+                        <div style="font-weight: 600; color: #344767; font-size: 16px;">
+                            @(Model.LocationName ?? "Unknown")
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <small class="text-muted d-block mb-1">
+                            <i class="bi bi-tag me-2"></i>Evaluation Type
+                        </small>
+                        <div>
+                            @if (Model.EvaluationType == "Manager")
+                            {
+                                <span class="badge bg-primary">
+                                    <i class="bi bi-person-badge me-1"></i>Manager
+                                </span>
+                            }
+                            else if (Model.EvaluationType == "Supervisor")
+                            {
+                                <span class="badge bg-info">
+                                    <i class="bi bi-person-check me-1"></i>Supervisor
+                                </span>
+                            }
+                            else if (Model.EvaluationType == "Safety Audit")
+                            {
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-shield-check me-1"></i>Safety Audit
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">@Model.EvaluationType</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <small class="text-muted d-block mb-1">
+                            <i class="bi bi-shield-check me-2"></i>Safety Compliance
+                        </small>
+                        <div class="d-flex align-items-center">
+                            <div class="progress flex-grow-1 me-2" style="height: 10px; border-radius: 5px;">
+                                <div class="progress-bar @(Model.SafetyCompliancePercentage >= 80 ? "bg-success" : Model.SafetyCompliancePercentage >= 50 ? "bg-warning" : "bg-danger")"
+                                     role="progressbar"
+                                     style="width: @Model.SafetyCompliancePercentage%"
+                                     aria-valuenow="@Model.SafetyCompliancePercentage"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"></div>
+                            </div>
+                            <strong style="color: #344767;">@Model.SafetyCompliancePercentage%</strong>
+                        </div>
+                    </div>
+
+                    @if (Model.EvaluationType == "Supervisor")
+                    {
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block mb-1">
+                                <i class="bi bi-list-check me-2"></i>Supervisor Checklist
+                            </small>
+                            <div class="d-flex align-items-center">
+                                <div class="progress flex-grow-1 me-2" style="height: 10px; border-radius: 5px;">
+                                    <div class="progress-bar @(Model.SupervisorChecklistPercentage >= 80 ? "bg-success" : Model.SupervisorChecklistPercentage >= 50 ? "bg-warning" : "bg-danger")"
+                                         role="progressbar"
+                                         style="width: @Model.SupervisorChecklistPercentage%"
+                                         aria-valuenow="@Model.SupervisorChecklistPercentage"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100"></div>
+                                </div>
+                                <strong style="color: #344767;">@Model.SupervisorChecklistPercentage%</strong>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Safety Equipment Checklist -->
+    <div class="col-lg-6">
+        <div class="card h-100" style="border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);">
+            <div class="card-header" style="background: #f8f9fa; border-bottom: 2px solid #e9ecef; border-radius: 15px 15px 0 0;">
+                <h6 class="mb-0" style="color: #344767; font-weight: 700;">
+                    <i class="bi bi-shield-check me-2"></i>Safety Equipment Checklist
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    @{
+                        var safetyItems = new[] {
+                            ("Pool Open", Model.PoolOpen, "bi-water"),
+                            ("Main Drain Visible", Model.MainDrainVisible, "bi-eye"),
+                            ("AED Present", Model.AEDPresent, "bi-heart-pulse"),
+                            ("Rescue Tube Present", Model.RescueTubePresent, "bi-life-preserver"),
+                            ("Backboard Present", Model.BackboardPresent, "bi-clipboard2-plus"),
+                            ("First Aid Kit", Model.FirstAidKit, "bi-bandaid"),
+                            ("Bloodborne Pathogen Kit", Model.BloodbornePathogenKit, "bi-droplet"),
+                            ("HazMat Kit", Model.HazMatKit, "bi-radioactive"),
+                            ("Gate/Fence Secured", Model.GateFenceSecured, "bi-lock"),
+                            ("Emergency Phone Working", Model.EmergencyPhoneWorking, "bi-telephone")
+                        };
+                    }
+                    @foreach (var item in safetyItems)
+                    {
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                @if (item.Item2 == true)
+                                {
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                }
+                                else if (item.Item2 == false)
+                                {
+                                    <i class="bi bi-x-circle-fill text-danger me-2"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-dash-circle text-muted me-2"></i>
+                                }
+                                <span style="color: #344767; font-size: 14px;">@item.Item1</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supervisor/Manager Checklist -->
+    @if (Model.EvaluationType == "Supervisor" || Model.EvaluationType == "Manager")
+    {
+        <div class="col-lg-6">
+            <div class="card h-100" style="border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);">
+                <div class="card-header" style="background: #f8f9fa; border-bottom: 2px solid #e9ecef; border-radius: 15px 15px 0 0;">
+                    <h6 class="mb-0" style="color: #344767; font-weight: 700;">
+                        <i class="bi bi-list-check me-2"></i>@Model.EvaluationType Checklist
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        @if (Model.EvaluationType == "Supervisor")
+                        {
+                            var supervisorItems = new[] {
+                                ("Staff On Duty", Model.StaffOnDuty),
+                                ("Scanning Rotation Discussed", Model.ScanningRotationDiscussed),
+                                ("Zones Established", Model.ZonesEstablished),
+                                ("Break Time Discussed", Model.BreakTimeDiscussed),
+                                ("Gate Control Discussed", Model.GateControlDiscussed),
+                                ("Cellphone Policy Discussed", Model.CellphonePolicyDiscussed),
+                                ("Pumproom Cleaned", Model.PumproomCleaned),
+                                ("Chemicals Tested/Logged", Model.BalancingChemicalsTestedLogged),
+                                ("Closing Procedures Discussed", Model.ClosingProceduresDiscussed)
+                            };
+                            foreach (var item in supervisorItems)
+                            {
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center">
+                                        @if (item.Item2 == true)
+                                        {
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                        }
+                                        else if (item.Item2 == false)
+                                        {
+                                            <i class="bi bi-x-circle-fill text-danger me-2"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-dash-circle text-muted me-2"></i>
+                                        }
+                                        <span style="color: #344767; font-size: 14px;">@item.Item1</span>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else if (Model.EvaluationType == "Manager")
+                        {
+                            <div class="col-12">
+                                <div class="d-flex align-items-center">
+                                    @if (Model.StaffWearingUniform == true)
+                                    {
+                                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    }
+                                    else if (Model.StaffWearingUniform == false)
+                                    {
+                                        <i class="bi bi-x-circle-fill text-danger me-2"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-dash-circle text-muted me-2"></i>
+                                    }
+                                    <span style="color: #344767; font-size: 14px;">Staff Wearing Uniform</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Safety Audit Specific -->
+    @if (Model.EvaluationType == "Safety Audit")
+    {
+        <div class="col-lg-6">
+            <div class="card h-100" style="border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);">
+                <div class="card-header" style="background: #f8f9fa; border-bottom: 2px solid #e9ecef; border-radius: 15px 15px 0 0;">
+                    <h6 class="mb-0" style="color: #344767; font-weight: 700;">
+                        <i class="bi bi-clipboard-data me-2"></i>Safety Audit Items
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        @{
+                            var auditItems = new[] {
+                                ("Facility Entry Procedures", Model.FacilityEntryProcedures),
+                                ("MSDS Available", Model.MSDS),
+                                ("Safety Supplies Needed", Model.SafetySuppliesNeeded)
+                            };
+                        }
+                        @foreach (var item in auditItems)
+                        {
+                            <div class="col-6">
+                                <div class="d-flex align-items-center">
+                                    @if (item.Item2 == true)
+                                    {
+                                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    }
+                                    else if (item.Item2 == false)
+                                    {
+                                        <i class="bi bi-x-circle-fill text-danger me-2"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-dash-circle text-muted me-2"></i>
+                                    }
+                                    <span style="color: #344767; font-size: 14px;">@item.Item1</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Notes Section -->
+    @if (!string.IsNullOrEmpty(Model.SafetyConcernsNotes) || !string.IsNullOrEmpty(Model.Notes))
+    {
+        <div class="col-12">
+            <div class="card" style="border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);">
+                <div class="card-header" style="background: #f8f9fa; border-bottom: 2px solid #e9ecef; border-radius: 15px 15px 0 0;">
+                    <h6 class="mb-0" style="color: #344767; font-weight: 700;">
+                        <i class="bi bi-journal-text me-2"></i>Notes
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    @if (!string.IsNullOrEmpty(Model.SafetyConcernsNotes))
+                    {
+                        <div class="mb-4">
+                            <h6 style="color: #344767; font-weight: 600;">Safety Concerns</h6>
+                            <div class="alert alert-warning" style="border-radius: 10px;">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                @Model.SafetyConcernsNotes
+                            </div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Notes))
+                    {
+                        <div>
+                            <h6 style="color: #344767; font-weight: 600;">Additional Notes</h6>
+                            <p style="color: #7b809a; line-height: 1.6;">
+                                @Model.Notes
+                            </p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Timestamps -->
+    <div class="col-12">
+        <div class="card" style="border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);">
+            <div class="card-body p-4">
+                <div class="row text-center">
+                    @if (Model.ClockInTime.HasValue)
+                    {
+                        <div class="col-md-4">
+                            <small class="text-muted d-block">Clock In</small>
+                            <strong style="color: #344767;">@Model.ClockInTime.Value.ToString("h:mm tt")</strong>
+                        </div>
+                    }
+                    @if (Model.ClockOutTime.HasValue)
+                    {
+                        <div class="col-md-4">
+                            <small class="text-muted d-block">Clock Out</small>
+                            <strong style="color: #344767;">@Model.ClockOutTime.Value.ToString("h:mm tt")</strong>
+                        </div>
+                    }
+                    <div class="col-md-4">
+                        <small class="text-muted d-block">Created</small>
+                        <strong style="color: #344767;">@Model.CreatedAt.ToString("MMM dd, yyyy h:mm tt")</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn-outline-secondary {
+        border: 2px solid #6c757d;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-outline-secondary:hover {
+        transform: translateY(-2px);
+    }
+
+    h6 {
+        font-weight: 700;
+        color: #344767;
+    }
+</style>

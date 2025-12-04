@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SummerSplashWeb.Services;
 using SummerSplashWeb.Models;
+using Dapper;
 
 namespace SummerSplashWeb.Controllers
 {
@@ -11,17 +12,24 @@ namespace SummerSplashWeb.Controllers
         private readonly IClockService _clockService;
         private readonly IUserService _userService;
         private readonly ILocationService _locationService;
+        private readonly IScheduleService _scheduleService;
         private readonly ILogger<ClockController> _logger;
+
+        // Clock in/out settings
+        private const int EARLY_CLOCK_IN_MINUTES = 10;
+        private const int GRACE_PERIOD_MINUTES = 30;
 
         public ClockController(
             IClockService clockService,
             IUserService userService,
             ILocationService locationService,
+            IScheduleService scheduleService,
             ILogger<ClockController> logger)
         {
             _clockService = clockService;
             _userService = userService;
             _locationService = locationService;
+            _scheduleService = scheduleService;
             _logger = logger;
         }
 
@@ -34,10 +42,17 @@ namespace SummerSplashWeb.Controllers
                 var todaysRecords = await _clockService.GetTodaysRecordsAsync();
                 var locations = await _locationService.GetAllLocationsAsync();
 
+                // Get today's schedules for late/absence checking
+                var today = DateTime.Today;
+                var todaysSchedules = await _scheduleService.GetSchedulesAsync(today, today.AddDays(1).AddSeconds(-1));
+
                 ViewBag.Users = users;
                 ViewBag.ActiveShifts = activeShifts;
                 ViewBag.TodaysRecords = todaysRecords;
                 ViewBag.Locations = locations;
+                ViewBag.TodaysSchedules = todaysSchedules;
+                ViewBag.EarlyClockInMinutes = EARLY_CLOCK_IN_MINUTES;
+                ViewBag.GracePeriodMinutes = GRACE_PERIOD_MINUTES;
 
                 return View();
             }
@@ -113,6 +128,118 @@ namespace SummerSplashWeb.Controllers
             {
                 _logger.LogError(ex, "Error clocking in user {UserId}", userId);
                 TempData["Error"] = "Error clocking in. Please try again.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CurrentlyClocked()
+        {
+            try
+            {
+                var users = await _userService.GetAllUsersAsync();
+                var activeShifts = await _clockService.GetActiveShiftsAsync();
+                var locations = await _locationService.GetAllLocationsAsync();
+
+                ViewBag.Users = users;
+                ViewBag.ActiveShifts = activeShifts;
+                ViewBag.Locations = locations;
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading currently clocked in");
+                TempData["Error"] = "Error loading data.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MissedPunches(DateTime? date = null)
+        {
+            try
+            {
+                var selectedDate = date ?? DateTime.Today;
+                var users = await _userService.GetAllUsersAsync();
+                var locations = await _locationService.GetAllLocationsAsync();
+
+                // Get schedules for the selected date
+                var schedules = await _scheduleService.GetSchedulesAsync(selectedDate, selectedDate.AddDays(1).AddSeconds(-1));
+
+                // Get clock records for the selected date
+                var clockRecords = await _clockService.GetTodaysRecordsAsync();
+                // Filter to selected date if not today
+                if (selectedDate.Date != DateTime.Today)
+                {
+                    using var connection = ((DatabaseService)Request.HttpContext.RequestServices.GetService<IDatabaseService>()!).CreateConnection();
+                    var sql = @"SELECT cr.*, u.FirstName + ' ' + u.LastName AS UserName, jl.Name AS LocationName
+                                FROM ClockRecords cr
+                                INNER JOIN Users u ON cr.UserId = u.UserId
+                                INNER JOIN JobLocations jl ON cr.LocationId = jl.LocationId
+                                WHERE CAST(cr.ClockInTime AS DATE) = @Date
+                                ORDER BY cr.ClockInTime DESC";
+                    clockRecords = (await Dapper.SqlMapper.QueryAsync<ClockRecord>(connection, sql, new { Date = selectedDate.Date })).ToList();
+                }
+
+                ViewBag.SelectedDate = selectedDate;
+                ViewBag.Users = users;
+                ViewBag.Locations = locations;
+                ViewBag.Schedules = schedules;
+                ViewBag.ClockRecords = clockRecords;
+                ViewBag.GracePeriodMinutes = GRACE_PERIOD_MINUTES;
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading missed punches");
+                TempData["Error"] = "Error loading missed punches data.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> WorkHistory(int? userId = null, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            try
+            {
+                var users = await _userService.GetAllUsersAsync();
+                var locations = await _locationService.GetAllLocationsAsync();
+
+                var start = startDate ?? DateTime.Today.AddDays(-30);
+                var end = endDate ?? DateTime.Today;
+
+                ViewBag.Users = users;
+                ViewBag.Locations = locations;
+                ViewBag.StartDate = start;
+                ViewBag.EndDate = end;
+                ViewBag.SelectedUserId = userId;
+
+                if (userId.HasValue)
+                {
+                    var user = await _userService.GetUserByIdAsync(userId.Value);
+                    var clockRecords = await _clockService.GetClockRecordsByUserAsync(userId.Value, start, end.AddDays(1));
+                    var totalHours = await _clockService.GetTotalHoursWorkedAsync(userId.Value, start, end.AddDays(1));
+
+                    ViewBag.SelectedUser = user;
+                    ViewBag.ClockRecords = clockRecords;
+                    ViewBag.TotalHours = totalHours;
+
+                    // Calculate summary stats
+                    var totalDays = clockRecords.Select(r => r.ClockInTime.Date).Distinct().Count();
+                    var avgHoursPerDay = totalDays > 0 ? (double)totalHours / totalDays : 0;
+
+                    ViewBag.TotalDays = totalDays;
+                    ViewBag.AvgHoursPerDay = avgHoursPerDay;
+                }
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading work history");
+                TempData["Error"] = "Error loading work history data.";
                 return RedirectToAction(nameof(Index));
             }
         }

@@ -25,7 +25,8 @@ namespace SummerSplashWeb.Controllers
             _logger = logger;
         }
 
-        public async Task<IActionResult> Index(DateTime? startDate = null, DateTime? endDate = null, int? locationId = null, int? techId = null)
+        // Main Reports Index with tabs for different report types
+        public async Task<IActionResult> Index(DateTime? startDate = null, DateTime? endDate = null, int? locationId = null, int? techId = null, string? reportType = "ServiceTech")
         {
             try
             {
@@ -40,27 +41,41 @@ namespace SummerSplashWeb.Controllers
                 }
 
                 var reports = await _reportService.GetReportsByDateRangeAsync(startDate.Value, endDate.Value);
+                var siteEvaluations = await _reportService.GetSiteEvaluationsAsync(startDate.Value, endDate.Value);
 
                 // Apply filters
                 if (locationId.HasValue)
                 {
                     reports = reports.Where(r => r.LocationId == locationId.Value).ToList();
+                    siteEvaluations = siteEvaluations.Where(e => e.LocationId == locationId.Value).ToList();
                 }
 
                 if (techId.HasValue)
                 {
                     reports = reports.Where(r => r.TechId == techId.Value).ToList();
+                    siteEvaluations = siteEvaluations.Where(e => e.UserId == techId.Value).ToList();
                 }
 
                 var locations = await _locationService.GetAllLocationsAsync();
                 var techs = await _userService.GetUsersByPositionAsync("Service Tech");
+                var managers = await _userService.GetUsersByPositionAsync("Manager");
+                var supervisors = await _userService.GetUsersByPositionAsync("Supervisor");
 
                 ViewBag.StartDate = startDate.Value.ToString("yyyy-MM-dd");
                 ViewBag.EndDate = endDate.Value.ToString("yyyy-MM-dd");
                 ViewBag.LocationId = locationId;
                 ViewBag.TechId = techId;
+                ViewBag.ReportType = reportType ?? "ServiceTech";
                 ViewBag.Locations = locations;
                 ViewBag.Techs = techs;
+                ViewBag.Managers = managers;
+                ViewBag.Supervisors = supervisors;
+                ViewBag.SiteEvaluations = siteEvaluations;
+
+                // Separate evaluations by type
+                ViewBag.ManagerEvaluations = siteEvaluations.Where(e => e.EvaluationType == "Manager").ToList();
+                ViewBag.SupervisorEvaluations = siteEvaluations.Where(e => e.EvaluationType == "Supervisor").ToList();
+                ViewBag.SafetyAudits = siteEvaluations.Where(e => e.EvaluationType == "Safety Audit").ToList();
 
                 return View(reports);
             }
@@ -283,6 +298,101 @@ namespace SummerSplashWeb.Controllers
                 _logger.LogError(ex, "Error adding photo to report {ReportId}", reportId);
                 TempData["Error"] = "Error adding photo. Please try again.";
                 return RedirectToAction("Details", new { id = reportId });
+            }
+        }
+
+        // ==========================================
+        // SITE EVALUATION ACTIONS (Manager/Supervisor/Safety Audit)
+        // ==========================================
+
+        [HttpGet]
+        public async Task<IActionResult> EvaluationDetails(int id)
+        {
+            try
+            {
+                var evaluation = await _reportService.GetSiteEvaluationByIdAsync(id);
+                if (evaluation == null)
+                {
+                    return NotFound();
+                }
+
+                return View(evaluation);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading evaluation details for ID {EvaluationId}", id);
+                return RedirectToAction("Index");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CreateEvaluation(string? evaluationType = "Supervisor")
+        {
+            try
+            {
+                var users = await _userService.GetAllUsersAsync();
+                var locations = await _locationService.GetAllLocationsAsync();
+
+                ViewBag.Users = users;
+                ViewBag.Locations = locations;
+                ViewBag.EvaluationType = evaluationType;
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading create evaluation form");
+                TempData["Error"] = "Error loading form. Please try again.";
+                return RedirectToAction("Index");
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateEvaluation(SiteEvaluation evaluation)
+        {
+            try
+            {
+                evaluation.EvaluationDate = DateTime.Now;
+                evaluation.CreatedAt = DateTime.Now;
+
+                var evaluationId = await _reportService.CreateSiteEvaluationAsync(evaluation);
+
+                TempData["Success"] = $"{evaluation.EvaluationType} evaluation created successfully!";
+                return RedirectToAction("EvaluationDetails", new { id = evaluationId });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating site evaluation");
+                TempData["Error"] = "Error creating evaluation. Please try again.";
+                return RedirectToAction("CreateEvaluation", new { evaluationType = evaluation.EvaluationType });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteEvaluation(int id)
+        {
+            try
+            {
+                var result = await _reportService.DeleteSiteEvaluationAsync(id);
+
+                if (result)
+                {
+                    TempData["Success"] = "Evaluation deleted successfully!";
+                }
+                else
+                {
+                    TempData["Error"] = "Failed to delete evaluation.";
+                }
+
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting evaluation ID {EvaluationId}", id);
+                TempData["Error"] = "Error deleting evaluation. Please try again.";
+                return RedirectToAction("Index");
             }
         }
     }

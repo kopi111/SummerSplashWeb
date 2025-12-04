@@ -31,7 +31,11 @@
             <div class="card bg-primary text-white">
                 <div class="card-body">
                     <h6 class="card-subtitle mb-2">Total Hours</h6>
-                    <h2 class="card-title mb-0">@totalHours.ToString("F1")</h2>
+                    @{
+                        var summaryHrs = (int)totalHours;
+                        var summaryMins = (int)((totalHours - summaryHrs) * 60);
+                    }
+                    <h2 class="card-title mb-0">@summaryHrs h @summaryMins m</h2>
                 </div>
             </div>
         </div>
@@ -126,12 +130,16 @@
                                     <td>
                                         @if (record.TotalHours.HasValue)
                                         {
-                                            <span class="badge bg-secondary">@record.TotalHours.Value.ToString("F1")h</span>
+                                            var hrs = (int)record.TotalHours.Value;
+                                            var mins = (int)((record.TotalHours.Value - hrs) * 60);
+                                            <span class="badge bg-secondary">@hrs h @mins m</span>
                                         }
                                         else
                                         {
-                                            var currentDuration = (DateTime.Now - record.ClockInTime).TotalHours;
-                                            <span class="badge bg-success">@currentDuration.ToString("F1")h (Active)</span>
+                                            var currentDuration = DateTime.Now - record.ClockInTime;
+                                            var hrs = (int)currentDuration.TotalHours;
+                                            var mins = currentDuration.Minutes;
+                                            <span class="badge bg-success">@hrs h @mins m (Active)</span>
                                         }
                                     </td>
                                     <td>
@@ -150,7 +158,13 @@
                         <tfoot>
                             <tr class="table-light">
                                 <th colspan="4" class="text-end">Total:</th>
-                                <th><span class="badge bg-primary">@totalHours.ToString("F1")h</span></th>
+                                <th>
+                                    @{
+                                        var totalHrs = (int)totalHours;
+                                        var totalMins = (int)((totalHours - totalHrs) * 60);
+                                    }
+                                    <span class="badge bg-primary">@totalHrs h @totalMins m</span>
+                                </th>
                                 <th></th>
                             </tr>
                         </tfoot>

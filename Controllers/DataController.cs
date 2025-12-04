@@ -434,5 +434,394 @@ namespace SummerSplashWeb.Controllers
                 return StatusCode(500, new { success = false, error = ex.Message });
             }
         }
+
+        [HttpPost("seed-site-evaluations")]
+        public async Task<IActionResult> SeedSiteEvaluations()
+        {
+            try
+            {
+                using var connection = _databaseService.CreateConnection();
+
+                _logger.LogInformation("Starting site evaluations data seeding...");
+
+                // Add missing columns to existing SiteEvaluations table (if they don't exist)
+                var alterTableStatements = new[]
+                {
+                    "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'SiteEvaluations') AND name = 'EvaluationDate') ALTER TABLE SiteEvaluations ADD EvaluationDate DATETIME NULL",
+                    "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'SiteEvaluations') AND name = 'BalancingChemicalsTestedLogged') ALTER TABLE SiteEvaluations ADD BalancingChemicalsTestedLogged BIT NULL",
+                    "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'SiteEvaluations') AND name = 'SafetyConcernsNotes') ALTER TABLE SiteEvaluations ADD SafetyConcernsNotes NVARCHAR(MAX) NULL",
+                    "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'SiteEvaluations') AND name = 'Notes') ALTER TABLE SiteEvaluations ADD Notes NVARCHAR(MAX) NULL"
+                };
+                foreach (var sql in alterTableStatements)
+                {
+                    try { await connection.ExecuteAsync(sql); } catch { /* Column might already exist */ }
+                }
+
+                // Clear existing evaluations
+                await connection.ExecuteAsync("DELETE FROM SiteEvaluations");
+
+                // Get users and locations
+                var users = await connection.QueryAsync<dynamic>("SELECT UserId, Position FROM Users WHERE IsActive = 1");
+                var locations = await connection.QueryAsync<dynamic>("SELECT LocationId, Name FROM JobLocations WHERE IsActive = 1");
+
+                var userList = users.ToList();
+                var locationList = locations.ToList();
+
+                if (!userList.Any() || !locationList.Any())
+                {
+                    return BadRequest(new { success = false, message = "No users or locations found. Please seed users and locations first." });
+                }
+
+                var random = new Random();
+
+                // Insert Supervisor Evaluations (without columns that may not exist)
+                for (int i = 0; i < 5; i++)
+                {
+                    var userId = userList[random.Next(userList.Count)].UserId;
+                    var locationId = locationList[random.Next(locationList.Count)].LocationId;
+                    var daysAgo = random.Next(1, 14);
+
+                    await connection.ExecuteAsync(@"
+                        INSERT INTO SiteEvaluations (
+                            UserId, LocationId, EvaluationType,
+                            PoolOpen, MainDrainVisible, AEDPresent, RescueTubePresent, BackboardPresent,
+                            FirstAidKit, BloodbornePathogenKit, HazMatKit, GateFenceSecured, EmergencyPhoneWorking,
+                            StaffOnDuty, ScanningRotationDiscussed, ZonesEstablished, BreakTimeDiscussed,
+                            GateControlDiscussed, CellphonePolicyDiscussed, PumproomCleaned,
+                            ClosingProceduresDiscussed, CreatedAt
+                        )
+                        VALUES (
+                            @UserId, @LocationId, 'Supervisor',
+                            @PoolOpen, @MainDrainVisible, @AEDPresent, @RescueTubePresent, @BackboardPresent,
+                            @FirstAidKit, @BloodbornePathogenKit, @HazMatKit, @GateFenceSecured, @EmergencyPhoneWorking,
+                            @StaffOnDuty, @ScanningRotationDiscussed, @ZonesEstablished, @BreakTimeDiscussed,
+                            @GateControlDiscussed, @CellphonePolicyDiscussed, @PumproomCleaned,
+                            @ClosingProceduresDiscussed, @CreatedAt
+                        )", new
+                    {
+                        UserId = userId,
+                        LocationId = locationId,
+                        PoolOpen = true,
+                        MainDrainVisible = random.Next(0, 2) == 1,
+                        AEDPresent = random.Next(0, 2) == 1,
+                        RescueTubePresent = true,
+                        BackboardPresent = random.Next(0, 2) == 1,
+                        FirstAidKit = true,
+                        BloodbornePathogenKit = random.Next(0, 2) == 1,
+                        HazMatKit = random.Next(0, 2) == 1,
+                        GateFenceSecured = true,
+                        EmergencyPhoneWorking = random.Next(0, 2) == 1,
+                        StaffOnDuty = true,
+                        ScanningRotationDiscussed = random.Next(0, 2) == 1,
+                        ZonesEstablished = random.Next(0, 2) == 1,
+                        BreakTimeDiscussed = random.Next(0, 2) == 1,
+                        GateControlDiscussed = random.Next(0, 2) == 1,
+                        CellphonePolicyDiscussed = random.Next(0, 2) == 1,
+                        PumproomCleaned = random.Next(0, 2) == 1,
+                        ClosingProceduresDiscussed = random.Next(0, 2) == 1,
+                        CreatedAt = DateTime.Now.AddDays(-daysAgo)
+                    });
+                }
+
+                // Insert Manager Evaluations (without columns that may not exist)
+                for (int i = 0; i < 4; i++)
+                {
+                    var userId = userList[random.Next(userList.Count)].UserId;
+                    var locationId = locationList[random.Next(locationList.Count)].LocationId;
+                    var daysAgo = random.Next(1, 21);
+
+                    await connection.ExecuteAsync(@"
+                        INSERT INTO SiteEvaluations (
+                            UserId, LocationId, EvaluationType,
+                            PoolOpen, MainDrainVisible, AEDPresent, RescueTubePresent, BackboardPresent,
+                            FirstAidKit, BloodbornePathogenKit, HazMatKit, GateFenceSecured, EmergencyPhoneWorking,
+                            StaffWearingUniform, StaffOnDuty, CreatedAt
+                        )
+                        VALUES (
+                            @UserId, @LocationId, 'Manager',
+                            @PoolOpen, @MainDrainVisible, @AEDPresent, @RescueTubePresent, @BackboardPresent,
+                            @FirstAidKit, @BloodbornePathogenKit, @HazMatKit, @GateFenceSecured, @EmergencyPhoneWorking,
+                            @StaffWearingUniform, @StaffOnDuty, @CreatedAt
+                        )", new
+                    {
+                        UserId = userId,
+                        LocationId = locationId,
+                        PoolOpen = true,
+                        MainDrainVisible = random.Next(0, 2) == 1,
+                        AEDPresent = true,
+                        RescueTubePresent = true,
+                        BackboardPresent = random.Next(0, 2) == 1,
+                        FirstAidKit = true,
+                        BloodbornePathogenKit = random.Next(0, 2) == 1,
+                        HazMatKit = random.Next(0, 2) == 1,
+                        GateFenceSecured = true,
+                        EmergencyPhoneWorking = true,
+                        StaffWearingUniform = random.Next(0, 2) == 1,
+                        StaffOnDuty = true,
+                        CreatedAt = DateTime.Now.AddDays(-daysAgo)
+                    });
+                }
+
+                // Insert Safety Audit Evaluations (without columns that may not exist)
+                for (int i = 0; i < 3; i++)
+                {
+                    var userId = userList[random.Next(userList.Count)].UserId;
+                    var locationId = locationList[random.Next(locationList.Count)].LocationId;
+                    var daysAgo = random.Next(1, 30);
+
+                    await connection.ExecuteAsync(@"
+                        INSERT INTO SiteEvaluations (
+                            UserId, LocationId, EvaluationType,
+                            PoolOpen, MainDrainVisible, AEDPresent, RescueTubePresent, BackboardPresent,
+                            FirstAidKit, BloodbornePathogenKit, HazMatKit, GateFenceSecured, EmergencyPhoneWorking,
+                            FacilityEntryProcedures, MSDS, SafetySuppliesNeeded, CreatedAt
+                        )
+                        VALUES (
+                            @UserId, @LocationId, 'Safety Audit',
+                            @PoolOpen, @MainDrainVisible, @AEDPresent, @RescueTubePresent, @BackboardPresent,
+                            @FirstAidKit, @BloodbornePathogenKit, @HazMatKit, @GateFenceSecured, @EmergencyPhoneWorking,
+                            @FacilityEntryProcedures, @MSDS, @SafetySuppliesNeeded, @CreatedAt
+                        )", new
+                    {
+                        UserId = userId,
+                        LocationId = locationId,
+                        PoolOpen = true,
+                        MainDrainVisible = random.Next(0, 2) == 1,
+                        AEDPresent = true,
+                        RescueTubePresent = true,
+                        BackboardPresent = true,
+                        FirstAidKit = true,
+                        BloodbornePathogenKit = random.Next(0, 2) == 1,
+                        HazMatKit = random.Next(0, 2) == 1,
+                        GateFenceSecured = true,
+                        EmergencyPhoneWorking = true,
+                        FacilityEntryProcedures = random.Next(0, 2) == 1,
+                        MSDS = random.Next(0, 2) == 1,
+                        SafetySuppliesNeeded = random.Next(0, 2) == 1,
+                        CreatedAt = DateTime.Now.AddDays(-daysAgo)
+                    });
+                }
+
+                var supervisorCount = await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM SiteEvaluations WHERE EvaluationType = 'Supervisor'");
+                var managerCount = await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM SiteEvaluations WHERE EvaluationType = 'Manager'");
+                var safetyCount = await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM SiteEvaluations WHERE EvaluationType = 'Safety Audit'");
+
+                _logger.LogInformation("Site evaluations seeding completed successfully!");
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Site evaluations data seeded successfully!",
+                    summary = new
+                    {
+                        supervisorEvaluations = supervisorCount,
+                        managerEvaluations = managerCount,
+                        safetyAudits = safetyCount,
+                        total = supervisorCount + managerCount + safetyCount
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error seeding site evaluations data");
+                return StatusCode(500, new { success = false, error = ex.Message });
+            }
+        }
+
+        [HttpPost("ensure-tables")]
+        public async Task<IActionResult> EnsureTables()
+        {
+            try
+            {
+                using var connection = _databaseService.CreateConnection();
+                var results = new List<string>();
+
+                _logger.LogInformation("Ensuring database tables exist...");
+
+                // Create ServiceTechReports table if not exists
+                var createServiceTechReports = @"
+                    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'ServiceTechReports')
+                    BEGIN
+                        CREATE TABLE ServiceTechReports (
+                            ReportId INT PRIMARY KEY IDENTITY(1,1),
+                            UserId INT NOT NULL,
+                            LocationId INT NOT NULL,
+                            ClockRecordId INT NULL,
+                            ServiceDate DATETIME NOT NULL DEFAULT GETDATE(),
+                            ClockInTime DATETIME NULL,
+                            ClockOutTime DATETIME NULL,
+                            ServiceType NVARCHAR(100) NULL,
+                            WorkPerformed NVARCHAR(MAX) NULL,
+                            ChemicalsAddedNotes NVARCHAR(MAX) NULL,
+                            IssuesFound NVARCHAR(MAX) NULL,
+                            Recommendations NVARCHAR(MAX) NULL,
+                            PoolVacuumed BIT NOT NULL DEFAULT 0,
+                            PoolBrushed BIT NOT NULL DEFAULT 0,
+                            SkimmersEmpty BIT NOT NULL DEFAULT 0,
+                            TilesCleaned BIT NOT NULL DEFAULT 0,
+                            FurnitureArranged BIT NOT NULL DEFAULT 0,
+                            CleanedStrainer BIT NOT NULL DEFAULT 0,
+                            BackwashFilters BIT NOT NULL DEFAULT 0,
+                            CleanedCartridges BIT NOT NULL DEFAULT 0,
+                            EmptyTrash BIT NOT NULL DEFAULT 0,
+                            BroomBucketHoseDeck BIT NOT NULL DEFAULT 0,
+                            FurnitureOrganized BIT NOT NULL DEFAULT 0,
+                            SkimWaterSurface BIT NOT NULL DEFAULT 0,
+                            CalibratedChemicalController BIT NOT NULL DEFAULT 0,
+                            SkimmerBasketsEmptied BIT NOT NULL DEFAULT 0,
+                            PumpBasketsEmptied BIT NOT NULL DEFAULT 0,
+                            FilterCleaned BIT NOT NULL DEFAULT 0,
+                            ChemicalsAdded BIT NOT NULL DEFAULT 0,
+                            PoolDeckCleaned BIT NOT NULL DEFAULT 0,
+                            EquipmentChecked BIT NOT NULL DEFAULT 0,
+                            GateLocksChecked BIT NOT NULL DEFAULT 0,
+                            SafetyEquipmentInspected BIT NOT NULL DEFAULT 0,
+                            WaterLevelChecked BIT NOT NULL DEFAULT 0,
+                            DebrisRemoved BIT NOT NULL DEFAULT 0,
+                            TilesInspected BIT NOT NULL DEFAULT 0,
+                            DrainCoversChecked BIT NOT NULL DEFAULT 0,
+                            LightsChecked BIT NOT NULL DEFAULT 0,
+                            SignageChecked BIT NOT NULL DEFAULT 0,
+                            RestroomsCleaned BIT NOT NULL DEFAULT 0,
+                            PoolGateLocked BIT NOT NULL DEFAULT 0,
+                            Flowrate DECIMAL(10,2) NULL,
+                            FilterPressure DECIMAL(10,2) NULL,
+                            WaterTemp DECIMAL(10,2) NULL,
+                            ControllerORP DECIMAL(10,2) NULL,
+                            ControllerPH DECIMAL(10,2) NULL,
+                            SuppliesNeeded NVARCHAR(MAX) NULL,
+                            ReportSentTo NVARCHAR(50) NULL,
+                            CustomerRating INT NULL,
+                            CustomerFeedback NVARCHAR(MAX) NULL,
+                            Notes NVARCHAR(MAX) NULL,
+                            CreatedAt DATETIME NOT NULL DEFAULT GETDATE(),
+                            UpdatedAt DATETIME NULL,
+                            FOREIGN KEY (UserId) REFERENCES Users(UserId),
+                            FOREIGN KEY (LocationId) REFERENCES JobLocations(LocationId)
+                        )
+                    END";
+
+                try
+                {
+                    await connection.ExecuteAsync(createServiceTechReports);
+                    results.Add("ServiceTechReports table ensured");
+                }
+                catch (Exception ex)
+                {
+                    results.Add($"ServiceTechReports: {ex.Message}");
+                }
+
+                // Create ChemicalReadings table if not exists
+                var createChemicalReadings = @"
+                    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'ChemicalReadings')
+                    BEGIN
+                        CREATE TABLE ChemicalReadings (
+                            ReadingId INT PRIMARY KEY IDENTITY(1,1),
+                            ReportId INT NOT NULL,
+                            PoolType NVARCHAR(50) NOT NULL DEFAULT 'Main pool',
+                            ChlorineBromine DECIMAL(5,2) NULL,
+                            pH DECIMAL(4,2) NULL,
+                            CalciumHardness DECIMAL(6,2) NULL,
+                            TotalAlkalinity DECIMAL(6,2) NULL,
+                            CyanuricAcid DECIMAL(6,2) NULL,
+                            Salt DECIMAL(8,2) NULL,
+                            Phosphates DECIMAL(8,2) NULL,
+                            Temperature DECIMAL(5,2) NULL,
+                            ReadingTime DATETIME NOT NULL DEFAULT GETDATE(),
+                            CreatedAt DATETIME NOT NULL DEFAULT GETDATE(),
+                            FOREIGN KEY (ReportId) REFERENCES ServiceTechReports(ReportId) ON DELETE CASCADE
+                        )
+                    END";
+
+                try
+                {
+                    await connection.ExecuteAsync(createChemicalReadings);
+                    results.Add("ChemicalReadings table ensured");
+                }
+                catch (Exception ex)
+                {
+                    results.Add($"ChemicalReadings: {ex.Message}");
+                }
+
+                // Create Photos table if not exists
+                var createPhotos = @"
+                    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Photos')
+                    BEGIN
+                        CREATE TABLE Photos (
+                            PhotoId INT PRIMARY KEY IDENTITY(1,1),
+                            ReportId INT NOT NULL,
+                            PhotoUrl NVARCHAR(500) NOT NULL,
+                            PhotoTimestamp DATETIME NOT NULL,
+                            Description NVARCHAR(500) NULL,
+                            CreatedAt DATETIME NOT NULL DEFAULT GETDATE(),
+                            FOREIGN KEY (ReportId) REFERENCES ServiceTechReports(ReportId) ON DELETE CASCADE
+                        )
+                    END";
+
+                try
+                {
+                    await connection.ExecuteAsync(createPhotos);
+                    results.Add("Photos table ensured");
+                }
+                catch (Exception ex)
+                {
+                    results.Add($"Photos: {ex.Message}");
+                }
+
+                _logger.LogInformation("Table creation completed");
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Database tables ensured",
+                    results = results
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error ensuring database tables");
+                return StatusCode(500, new { success = false, error = ex.Message });
+            }
+        }
+
+        [HttpGet("check-schema/{tableName}")]
+        public async Task<IActionResult> CheckSchema(string tableName)
+        {
+            try
+            {
+                using var connection = _databaseService.CreateConnection();
+                var sql = @"SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE
+                            FROM INFORMATION_SCHEMA.COLUMNS
+                            WHERE TABLE_NAME = @TableName
+                            ORDER BY ORDINAL_POSITION";
+                var columns = await connection.QueryAsync(sql, new { TableName = tableName });
+                return Ok(new { success = true, table = tableName, columns = columns });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, error = ex.Message });
+            }
+        }
+
+        [HttpGet("raw-data/{tableName}")]
+        public async Task<IActionResult> GetRawData(string tableName, [FromQuery] int limit = 10)
+        {
+            try
+            {
+                // Whitelist table names to prevent SQL injection
+                var allowedTables = new[] { "ServiceTechReports", "ChemicalReadings", "Photos", "SiteEvaluations", "Users", "JobLocations" };
+                if (!allowedTables.Contains(tableName))
+                    return BadRequest(new { success = false, error = "Table not allowed" });
+
+                using var connection = _databaseService.CreateConnection();
+                var sql = $"SELECT TOP {limit} * FROM {tableName}";
+                var data = await connection.QueryAsync(sql);
+                return Ok(new { success = true, table = tableName, count = data.Count(), data = data });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, error = ex.Message });
+            }
+        }
     }
 }

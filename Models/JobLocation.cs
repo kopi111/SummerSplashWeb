@@ -10,6 +10,10 @@ namespace SummerSplashWeb.Models
         public string? City { get; set; }
         public string? State { get; set; }
         public string? ZipCode { get; set; }
+        public string? Country { get; set; } = "USA";
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
+        public int Radius { get; set; } = 100; // Radius in meters for geofencing
         public string? ContactName { get; set; }
         public string? ContactPhone { get; set; }
         public string? ContactEmail { get; set; }
@@ -20,6 +24,7 @@ namespace SummerSplashWeb.Models
         public DateTime CreatedAt { get; set; }
 
         public string DisplayAddress => Address ?? "No address provided";
+        public string FullAddress => $"{Address}, {City}, {State} {ZipCode}, {Country}";
         public string DisplayContact => !string.IsNullOrEmpty(ContactName)
             ? $"{ContactName} - {ContactPhone}"
             : "No contact info";

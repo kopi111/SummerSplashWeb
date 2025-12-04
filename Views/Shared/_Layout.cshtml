@@ -38,10 +38,17 @@
             z-index: 1000;
             box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
             overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+
+        .sidebar::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
         }
 
         .sidebar-header {
-            padding: 25px 20px;
+            padding: 20px 15px;
             text-align: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
@@ -56,6 +63,12 @@
             font-size: 13px;
             opacity: 0.8;
             margin: 0;
+        }
+
+        .sidebar-logo {
+            max-width: 200px;
+            height: auto;
+            border-radius: 8px;
         }
 
         .sidebar-menu {
@@ -212,6 +225,66 @@
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
         }
 
+        /* Clickable Stat Cards */
+        .stat-card-link {
+            text-decoration: none;
+            display: block;
+            height: 100%;
+        }
+
+        .stat-card-link .stat-card {
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card-link .stat-card::after {
+            content: '\F285';
+            font-family: 'bootstrap-icons';
+            position: absolute;
+            bottom: 12px;
+            right: 16px;
+            font-size: 14px;
+            color: #7b809a;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card-link:hover .stat-card::after {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .stat-card-link:hover .stat-card {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.2);
+        }
+
+        .stat-card-link:focus {
+            outline: none;
+        }
+
+        .stat-card-link:focus .stat-card {
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.4);
+        }
+
+        .stat-card-link .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-card-link:hover .stat-card::before {
+            opacity: 1;
+        }
+
         .stat-card.primary {
             border-left-color: #667eea;
         }
@@ -357,9 +430,8 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <div style="font-size: 40px;">🌊</div>
-            <h3>SummerSplash</h3>
-            <p>Admin Dashboard</p>
+            <img src="/images/logo.jpeg" alt="Summer Splash Pool Services" class="sidebar-logo" />
+            <p class="mt-2">Admin Dashboard</p>
         </div>
 
         <div class="sidebar-menu">
@@ -375,7 +447,7 @@
             <div class="menu-item">
                 <a href="@Url.Action("Index", "Users")" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
                     <i class="bi bi-people"></i>
-                    <span>Users</span>
+                    <span>Employees</span>
                 </a>
             </div>
             <div class="menu-item">
@@ -393,9 +465,27 @@
 
             <div class="menu-section">Operations</div>
             <div class="menu-item">
-                <a href="@Url.Action("Index", "Clock")" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Clock" ? "active" : "")">
+                <a href="@Url.Action("Index", "Clock")" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Clock" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
                     <i class="bi bi-clock-history"></i>
                     <span>Time Clock</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="@Url.Action("CurrentlyClocked", "Clock")" class="@(ViewContext.RouteData.Values["action"]?.ToString() == "CurrentlyClocked" ? "active" : "")">
+                    <i class="bi bi-person-check-fill"></i>
+                    <span>Currently Clocked</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="@Url.Action("MissedPunches", "Clock")" class="@(ViewContext.RouteData.Values["action"]?.ToString() == "MissedPunches" ? "active" : "")">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>Missed Punches</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="@Url.Action("WorkHistory", "Clock")" class="@(ViewContext.RouteData.Values["action"]?.ToString() == "WorkHistory" ? "active" : "")">
+                    <i class="bi bi-journal-check"></i>
+                    <span>Work History</span>
                 </a>
             </div>
             <div class="menu-item">

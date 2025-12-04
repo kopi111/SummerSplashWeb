@@ -64,9 +64,15 @@
                     </a>
                 </li>
                 <li class="nav-item" role="presentation">
+                    <a href="@Url.Action("Index", new { view = "month", date = selectedDate })"
+                       class="nav-link @(view == "month" ? "active" : "")">
+                        <i class="bi bi-calendar-month me-1"></i>Month View
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
                     <a href="@Url.Action("Index", new { view = "calendar", date = selectedDate })"
                        class="nav-link @(view == "calendar" ? "active" : "")">
-                        <i class="bi bi-calendar3 me-1"></i>Calendar
+                        <i class="bi bi-calendar3 me-1"></i>4-Week Calendar
                     </a>
                 </li>
             </ul>
@@ -295,6 +301,140 @@
                             </div>
                         }
                     }
+                </div>
+            </div>
+        </div>
+    }
+    else if (view == "month")
+    {
+        <!-- Month View -->
+        var monthStart = new DateTime(selectedDate.Year, selectedDate.Month, 1);
+        var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+        var calendarStart = monthStart.AddDays(-(int)monthStart.DayOfWeek); // Start from Sunday
+        var calendarEnd = monthEnd.AddDays(6 - (int)monthEnd.DayOfWeek); // End on Saturday
+
+        <!-- Month Navigation -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="@Url.Action("Index", new { view = "month", date = monthStart.AddMonths(-1) })"
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-chevron-left"></i> Previous Month
+                    </a>
+                    <h4 class="mb-0">@monthStart.ToString("MMMM yyyy")</h4>
+                    <a href="@Url.Action("Index", new { view = "month", date = monthStart.AddMonths(1) })"
+                       class="btn btn-outline-secondary">
+                        Next Month <i class="bi bi-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0" style="table-layout: fixed;">
+                        <thead class="table-dark">
+                            <tr>
+                                <th class="text-center" style="width: 14.28%;">Sunday</th>
+                                <th class="text-center" style="width: 14.28%;">Monday</th>
+                                <th class="text-center" style="width: 14.28%;">Tuesday</th>
+                                <th class="text-center" style="width: 14.28%;">Wednesday</th>
+                                <th class="text-center" style="width: 14.28%;">Thursday</th>
+                                <th class="text-center" style="width: 14.28%;">Friday</th>
+                                <th class="text-center" style="width: 14.28%;">Saturday</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var currentDate = calendarStart;
+                                while (currentDate <= calendarEnd)
+                                {
+                                    <tr>
+                                        @for (var d = 0; d < 7; d++)
+                                        {
+                                            var cellDate = currentDate.AddDays(d);
+                                            var isCurrentMonth = cellDate.Month == selectedDate.Month;
+                                            var isToday = cellDate.Date == DateTime.Today;
+                                            var daySchedules = schedules.Where(s => s.ScheduledDate.Date == cellDate.Date).ToList();
+
+                                            <td class="@(!isCurrentMonth ? "bg-light text-muted" : "") @(isToday ? "table-primary" : "")"
+                                                style="vertical-align: top; min-height: 100px; height: 100px;">
+                                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                                    <span class="fw-bold @(isToday ? "badge bg-primary" : "")">
+                                                        @cellDate.Day
+                                                    </span>
+                                                    @if (isCurrentMonth && daySchedules.Any())
+                                                    {
+                                                        <span class="badge bg-secondary">@daySchedules.Count</span>
+                                                    }
+                                                </div>
+                                                <div class="schedule-items" style="max-height: 70px; overflow-y: auto; font-size: 0.75rem;">
+                                                    @foreach (var schedule in daySchedules.Take(4))
+                                                    {
+                                                        var user = users.FirstOrDefault(u => u.UserId == schedule.UserId);
+                                                        var location = locations.FirstOrDefault(l => l.LocationId == schedule.LocationId);
+                                                        <div class="badge bg-success text-white mb-1 d-block text-start text-truncate"
+                                                             style="cursor: pointer; font-size: 0.65rem;"
+                                                             title="@(user?.FirstName) @(user?.LastName) - @schedule.StartTime?.ToString(@"h:mm tt") at @(location?.Name)"
+                                                             onclick="window.location.href='@Url.Action("Edit", new { id = schedule.ScheduleId })'">
+                                                            @(user?.FirstName ?? "?") @schedule.StartTime?.ToString(@"h:mm")
+                                                        </div>
+                                                    }
+                                                    @if (daySchedules.Count > 4)
+                                                    {
+                                                        <div class="text-center">
+                                                            <a href="@Url.Action("Index", new { view = "week", date = cellDate })"
+                                                               class="small text-muted">+@(daySchedules.Count - 4) more</a>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </td>
+                                        }
+                                    </tr>
+                                    currentDate = currentDate.AddDays(7);
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Month Summary -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        @{
+                            var monthSchedules = schedules.Where(s => s.ScheduledDate.Month == selectedDate.Month && s.ScheduledDate.Year == selectedDate.Year).ToList();
+                            var monthTotalHours = monthSchedules.Sum(s => s.ScheduledHours);
+                        }
+                        <h6 class="mb-1">Total Shifts</h6>
+                        <h3 class="mb-0">@monthSchedules.Count</h3>
+                        <small>This month</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h6 class="mb-1">Total Hours</h6>
+                        <h3 class="mb-0">@monthTotalHours.ToString("F1")</h3>
+                        <small>Scheduled hours</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        @{
+                            var employeesWithShifts = monthSchedules.Select(s => s.UserId).Distinct().Count();
+                        }
+                        <h6 class="mb-1">Employees</h6>
+                        <h3 class="mb-0">@employeesWithShifts</h3>
+                        <small>With scheduled shifts</small>
+                    </div>
                 </div>
             </div>
         </div>

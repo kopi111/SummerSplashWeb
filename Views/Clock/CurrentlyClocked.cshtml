@@ -1,0 +1,155 @@
+@using SummerSplashWeb.Models
+@{
+    ViewData["Title"] = "Currently Clocked In";
+    var users = ViewBag.Users as List<User> ?? new List<User>();
+    var activeShifts = ViewBag.ActiveShifts as List<ClockRecord> ?? new List<ClockRecord>();
+    var locations = ViewBag.Locations as List<JobLocation> ?? new List<JobLocation>();
+}
+
+<div class="content-area">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1"><i class="bi bi-person-check-fill me-2"></i>Currently Clocked In</h2>
+            <p class="text-muted mb-0">Employees currently on shift</p>
+        </div>
+        <div>
+            <span class="badge bg-success" style="font-size: 1.2rem; padding: 10px 20px;">
+                <i class="bi bi-people-fill me-2"></i>@activeShifts.Count Active
+            </span>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (activeShifts.Any())
+    {
+        <!-- Summary Stats -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h3 class="mb-1">@activeShifts.Count</h3>
+                        <small>Employees Working</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        @{
+                            var totalHoursToday = activeShifts.Sum(s => (DateTime.Now - s.ClockInTime).TotalHours);
+                        }
+                        <h3 class="mb-1">@totalHoursToday.ToString("F1")h</h3>
+                        <small>Total Hours (Active)</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        @{
+                            var locationsInUse = activeShifts.Select(s => s.LocationId).Distinct().Count();
+                        }
+                        <h3 class="mb-1">@locationsInUse</h3>
+                        <small>Active Locations</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Shifts Grid -->
+        <div class="row">
+            @foreach (var shift in activeShifts.OrderBy(s => s.ClockInTime))
+            {
+                var user = users.FirstOrDefault(u => u.UserId == shift.UserId);
+                var location = locations.FirstOrDefault(l => l.LocationId == shift.LocationId);
+                var duration = DateTime.Now - shift.ClockInTime;
+                var hours = (int)duration.TotalHours;
+                var minutes = duration.Minutes;
+
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 border-success border-2 shadow-sm">
+                        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-0">
+                                    <i class="bi bi-person-circle me-2"></i>@(user?.FirstName ?? shift.UserName?.Split(' ')[0]) @(user?.LastName ?? "")
+                                </h5>
+                            </div>
+                            <span class="badge bg-light text-success">
+                                <i class="bi bi-record-circle me-1"></i>Active
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted"><i class="bi bi-briefcase me-2"></i>Position</span>
+                                    <strong>@(user?.Position ?? "Employee")</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted"><i class="bi bi-geo-alt me-2"></i>Location</span>
+                                    <strong>@(location?.Name ?? shift.LocationName ?? "N/A")</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted"><i class="bi bi-clock me-2"></i>Clock In</span>
+                                    <strong class="text-success">@shift.ClockInTime.ToString("h:mm tt")</strong>
+                                </div>
+                            </div>
+
+                            <!-- Duration Display -->
+                            <div class="bg-light rounded p-3 text-center mb-3">
+                                <small class="text-muted d-block mb-1">Time on Shift</small>
+                                <h2 class="mb-0 text-success">
+                                    @hours<small class="text-muted">h</small> @minutes<small class="text-muted">m</small>
+                                </h2>
+                            </div>
+
+                            <form asp-action="ClockOut" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="recordId" value="@shift.RecordId" />
+                                <button type="submit" class="btn btn-danger w-100">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Clock Out
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-person-x" style="font-size: 5rem; color: #ccc;"></i>
+                <h3 class="mt-4 text-muted">No One Currently Clocked In</h3>
+                <p class="text-muted">There are no employees currently on shift.</p>
+                <a href="@Url.Action("Index")" class="btn btn-primary mt-2">
+                    <i class="bi bi-clock me-2"></i>Go to Time Clock
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+    // Auto-refresh every 60 seconds
+    setInterval(function() {
+        location.reload();
+    }, 60000);
+</script>

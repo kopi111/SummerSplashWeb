@@ -101,3 +101,8 @@ UpgradeLog*.htm
 
 # Rider
 .idea/
+
+publish/
+publish-new/
+bin/
+obj/

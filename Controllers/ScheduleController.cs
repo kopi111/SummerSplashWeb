@@ -120,12 +120,60 @@ namespace SummerSplashWeb.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Schedule schedule)
+        public async Task<IActionResult> Create(Schedule schedule, DateTime? StartDateRange = null, DateTime? EndDateRange = null)
         {
             try
             {
-                if (ModelState.IsValid)
+                // Check if date range is provided
+                if (StartDateRange.HasValue && EndDateRange.HasValue && EndDateRange >= StartDateRange)
                 {
+                    // Create schedules for date range
+                    int successCount = 0;
+                    int errorCount = 0;
+                    var currentDate = StartDateRange.Value;
+
+                    while (currentDate <= EndDateRange.Value)
+                    {
+                        var newSchedule = new Schedule
+                        {
+                            UserId = schedule.UserId,
+                            LocationId = schedule.LocationId,
+                            SupervisorId = schedule.SupervisorId,
+                            ScheduledDate = currentDate,
+                            StartTime = schedule.StartTime,
+                            EndTime = schedule.EndTime,
+                            Notes = schedule.Notes,
+                            CreatedAt = DateTime.Now
+                        };
+
+                        try
+                        {
+                            var result = await _scheduleService.CreateScheduleAsync(newSchedule);
+                            if (result) successCount++;
+                            else errorCount++;
+                        }
+                        catch
+                        {
+                            errorCount++;
+                        }
+
+                        currentDate = currentDate.AddDays(1);
+                    }
+
+                    if (successCount > 0)
+                    {
+                        TempData["Success"] = $"Successfully created {successCount} schedule(s) from {StartDateRange.Value:MMM d} to {EndDateRange.Value:MMM d, yyyy}!";
+                    }
+                    if (errorCount > 0)
+                    {
+                        TempData["Error"] = $"Failed to create {errorCount} schedule(s).";
+                    }
+
+                    return RedirectToAction(nameof(Index), new { date = StartDateRange.Value });
+                }
+                else if (ModelState.IsValid)
+                {
+                    // Single date schedule
                     schedule.CreatedAt = DateTime.Now;
                     var result = await _scheduleService.CreateScheduleAsync(schedule);
 

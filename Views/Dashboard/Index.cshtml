@@ -5,118 +5,134 @@
 <!-- Stats Cards Row -->
 <div class="row g-4 mb-4">
     <div class="col-md-3">
-        <div class="stat-card primary">
-            <div class="stat-header">
-                <div>
-                    <div class="stat-value" id="totalEmployees">0</div>
-                    <div class="stat-label">Total Employees</div>
-                </div>
-                <div class="stat-icon primary">
-                    <i class="bi bi-people-fill"></i>
+        <a href="@Url.Action("Index", "Users")" class="stat-card-link" title="View all employees">
+            <div class="stat-card primary">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value" id="totalEmployees">0</div>
+                        <div class="stat-label">Total Employees</div>
+                    </div>
+                    <div class="stat-icon primary">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-md-3">
-        <div class="stat-card success">
-            <div class="stat-header">
-                <div>
-                    <div class="stat-value" id="activeShifts">0</div>
-                    <div class="stat-label">Active Shifts</div>
-                </div>
-                <div class="stat-icon success">
-                    <i class="bi bi-clock-fill"></i>
+        <a href="@Url.Action("CurrentlyClocked", "Clock")" class="stat-card-link" title="View currently clocked in employees">
+            <div class="stat-card success">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value" id="activeShifts">0</div>
+                        <div class="stat-label">Active Shifts</div>
+                    </div>
+                    <div class="stat-icon success">
+                        <i class="bi bi-clock-fill"></i>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-md-3">
-        <div class="stat-card info">
-            <div class="stat-header">
-                <div>
-                    <div class="stat-value" id="todayReports">0</div>
-                    <div class="stat-label">Today's Reports</div>
-                </div>
-                <div class="stat-icon info">
-                    <i class="bi bi-file-text-fill"></i>
+        <a href="@Url.Action("Index", "Reports")" class="stat-card-link" title="View all reports">
+            <div class="stat-card info">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value" id="todayReports">0</div>
+                        <div class="stat-label">Today's Reports</div>
+                    </div>
+                    <div class="stat-icon info">
+                        <i class="bi bi-file-text-fill"></i>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-md-3">
-        <div class="stat-card warning">
-            <div class="stat-header">
-                <div>
-                    <div class="stat-value" id="pendingApprovals">0</div>
-                    <div class="stat-label">Pending Approvals</div>
-                </div>
-                <div class="stat-icon warning">
-                    <i class="bi bi-exclamation-circle-fill"></i>
+        <a href="@Url.Action("Index", "Users", new { status = "Pending" })" class="stat-card-link" title="View pending approvals">
+            <div class="stat-card warning">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value" id="pendingApprovals">0</div>
+                        <div class="stat-label">Pending Approvals</div>
+                    </div>
+                    <div class="stat-icon warning">
+                        <i class="bi bi-exclamation-circle-fill"></i>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 
 <!-- Second Row Stats -->
 <div class="row g-4 mb-4">
     <div class="col-md-3">
-        <div class="stat-card info">
-            <div class="stat-header">
-                <div>
-                    <div class="stat-value" id="totalLocations">0</div>
-                    <div class="stat-label">Locations</div>
-                </div>
-                <div class="stat-icon info">
-                    <i class="bi bi-geo-alt-fill"></i>
+        <a href="@Url.Action("Index", "Locations")" class="stat-card-link" title="View all locations">
+            <div class="stat-card info">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value" id="totalLocations">0</div>
+                        <div class="stat-label">Locations</div>
+                    </div>
+                    <div class="stat-icon info">
+                        <i class="bi bi-geo-alt-fill"></i>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-md-3">
-        <div class="stat-card success">
-            <div class="stat-header">
-                <div>
-                    <div class="stat-value" id="totalHoursToday">0</div>
-                    <div class="stat-label">Hours Today</div>
-                </div>
-                <div class="stat-icon success">
-                    <i class="bi bi-calendar-check-fill"></i>
+        <a href="@Url.Action("WorkHistory", "Clock")" class="stat-card-link" title="View today's work history">
+            <div class="stat-card success">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value" id="totalHoursToday">0</div>
+                        <div class="stat-label">Hours Today</div>
+                    </div>
+                    <div class="stat-icon success">
+                        <i class="bi bi-calendar-check-fill"></i>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-md-3">
-        <div class="stat-card primary">
-            <div class="stat-header">
-                <div>
-                    <div class="stat-value" id="scheduledShifts">0</div>
-                    <div class="stat-label">Scheduled Shifts</div>
-                </div>
-                <div class="stat-icon primary">
-                    <i class="bi bi-calendar-week-fill"></i>
+        <a href="@Url.Action("Index", "Schedule")" class="stat-card-link" title="View scheduled shifts">
+            <div class="stat-card primary">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value" id="scheduledShifts">0</div>
+                        <div class="stat-label">Scheduled Shifts</div>
+                    </div>
+                    <div class="stat-icon primary">
+                        <i class="bi bi-calendar-week-fill"></i>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-md-3">
-        <div class="stat-card danger">
-            <div class="stat-header">
-                <div>
-                    <div class="stat-value" id="missedPunches">0</div>
-                    <div class="stat-label">Missed Punches</div>
-                </div>
-                <div class="stat-icon danger">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
+        <a href="@Url.Action("MissedPunches", "Clock")" class="stat-card-link" title="View missed punches">
+            <div class="stat-card danger">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value" id="missedPunches">0</div>
+                        <div class="stat-label">Missed Punches</div>
+                    </div>
+                    <div class="stat-icon danger">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 
@@ -287,9 +303,9 @@
                         data.reports.forEach(report => {
                             const serviceDate = new Date(report.serviceDate);
 
-                            html += '<tr>';
-                            html += '<td><div style="font-weight: 600; color: #344767;">' + report.techName + '</div></td>';
-                            html += '<td><span class="badge bg-info">' + report.locationName + '</span></td>';
+                            html += '<tr class="report-row" style="cursor: pointer;" onclick="window.location.href=\'/Reports/Details/' + report.reportId + '\'">';
+                            html += '<td><div style="font-weight: 600; color: #344767;">' + (report.technicianName || report.techName || 'Unknown') + '</div></td>';
+                            html += '<td><span class="badge bg-info">' + (report.locationName || 'Unknown') + '</span></td>';
                             html += '<td><small class="text-muted">' + formatDate(serviceDate) + '</small></td>';
                             html += '<td><span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Completed</span></td>';
                             html += '</tr>';
@@ -377,4 +393,11 @@
             return months[date.getMonth()] + ' ' + date.getDate();
         }
     </script>
+
+    <style>
+        .report-row:hover {
+            background-color: #f8f9fa;
+            transition: background-color 0.2s;
+        }
+    </style>
 }

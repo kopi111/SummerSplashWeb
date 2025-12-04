@@ -120,17 +120,12 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">Status</label>
-                    <div class="d-flex gap-3 align-items-center" style="height: 38px;">
-                        <div class="form-check form-switch">
-                            <input asp-for="IsActive" class="form-check-input" type="checkbox" role="switch" style="width: 3em; height: 1.5em;">
-                            <label asp-for="IsActive" class="form-check-label fw-semibold">Active</label>
-                        </div>
-                        <div class="form-check form-switch">
-                            <input asp-for="IsApproved" class="form-check-input" type="checkbox" role="switch" style="width: 3em; height: 1.5em;">
-                            <label asp-for="IsApproved" class="form-check-label fw-semibold">Approved</label>
-                        </div>
-                    </div>
+                    <label asp-for="Status" class="form-label fw-semibold">Status</label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="Approved">Approved</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Terminated">Terminated</option>
+                    </select>
                 </div>
 
                 <div class="col-12">
