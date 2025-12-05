@@ -482,9 +482,13 @@ namespace SummerSplashWeb.Services
     {
         Task<List<JobLocation>> GetAllLocationsAsync();
         Task<JobLocation?> GetLocationByIdAsync(int locationId);
-        Task<bool> CreateLocationAsync(JobLocation location);
+        Task<int> CreateLocationAsync(JobLocation location);
         Task<bool> UpdateLocationAsync(JobLocation location);
         Task<bool> DeleteLocationAsync(int locationId);
+        // Contact methods
+        Task<List<LocationContact>> GetLocationContactsAsync(int locationId);
+        Task<bool> CreateLocationContactAsync(LocationContact contact);
+        Task<bool> DeleteLocationContactsAsync(int locationId);
     }
 
     public class LocationService : ILocationService
@@ -511,15 +515,22 @@ namespace SummerSplashWeb.Services
             return await connection.QueryFirstOrDefaultAsync<JobLocation>(sql, new { LocationId = locationId });
         }
 
-        public async Task<bool> CreateLocationAsync(JobLocation location)
+        public async Task<int> CreateLocationAsync(JobLocation location)
         {
             using var connection = _databaseService.CreateConnection();
             var sql = @"
-                INSERT INTO JobLocations (Name, Address, Latitude, Longitude, ContactPerson, ContactPhone, ContactEmail)
-                VALUES (@Name, @Address, @Latitude, @Longitude, @ContactPerson, @ContactPhone, @ContactEmail)";
+                INSERT INTO JobLocations (Name, Address, City, State, ZipCode, Country, Latitude, Longitude,
+                    Radius, ContactName, ContactPhone, ContactEmail, PoolType, PoolSize, Notes, IsActive, CreatedAt,
+                    LockboxCode, SupervisorId, SupervisorName, SupervisorPhone,
+                    PoolDepthFeet, PoolDepthInches, HasWadingPool, WadingPoolSizeGallons, HasSpa, SpaSizeGallons)
+                VALUES (@Name, @Address, @City, @State, @ZipCode, @Country, @Latitude, @Longitude,
+                    @Radius, @ContactName, @ContactPhone, @ContactEmail, @PoolType, @PoolSize, @Notes, @IsActive, GETDATE(),
+                    @LockboxCode, @SupervisorId, @SupervisorName, @SupervisorPhone,
+                    @PoolDepthFeet, @PoolDepthInches, @HasWadingPool, @WadingPoolSizeGallons, @HasSpa, @SpaSizeGallons);
+                SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
-            var result = await connection.ExecuteAsync(sql, location);
-            return result > 0;
+            var locationId = await connection.ExecuteScalarAsync<int>(sql, location);
+            return locationId;
         }
 
         public async Task<bool> UpdateLocationAsync(JobLocation location)
@@ -527,8 +538,15 @@ namespace SummerSplashWeb.Services
             using var connection = _databaseService.CreateConnection();
             var sql = @"
                 UPDATE JobLocations
-                SET Name = @Name, Address = @Address, Latitude = @Latitude, Longitude = @Longitude,
-                    ContactPerson = @ContactPerson, ContactPhone = @ContactPhone, ContactEmail = @ContactEmail
+                SET Name = @Name, Address = @Address, City = @City, State = @State, ZipCode = @ZipCode,
+                    Country = @Country, Latitude = @Latitude, Longitude = @Longitude, Radius = @Radius,
+                    ContactName = @ContactName, ContactPhone = @ContactPhone, ContactEmail = @ContactEmail,
+                    PoolType = @PoolType, PoolSize = @PoolSize, Notes = @Notes, IsActive = @IsActive,
+                    LockboxCode = @LockboxCode, SupervisorId = @SupervisorId,
+                    SupervisorName = @SupervisorName, SupervisorPhone = @SupervisorPhone,
+                    PoolDepthFeet = @PoolDepthFeet, PoolDepthInches = @PoolDepthInches,
+                    HasWadingPool = @HasWadingPool, WadingPoolSizeGallons = @WadingPoolSizeGallons,
+                    HasSpa = @HasSpa, SpaSizeGallons = @SpaSizeGallons
                 WHERE LocationId = @LocationId";
 
             var result = await connection.ExecuteAsync(sql, location);
@@ -542,6 +560,33 @@ namespace SummerSplashWeb.Services
             var result = await connection.ExecuteAsync(sql, new { LocationId = locationId });
             return result > 0;
         }
+
+        public async Task<List<LocationContact>> GetLocationContactsAsync(int locationId)
+        {
+            using var connection = _databaseService.CreateConnection();
+            var sql = "SELECT * FROM LocationContacts WHERE LocationId = @LocationId ORDER BY IsPrimary DESC";
+            var contacts = await connection.QueryAsync<LocationContact>(sql, new { LocationId = locationId });
+            return contacts.ToList();
+        }
+
+        public async Task<bool> CreateLocationContactAsync(LocationContact contact)
+        {
+            using var connection = _databaseService.CreateConnection();
+            var sql = @"
+                INSERT INTO LocationContacts (LocationId, ContactName, ContactPhone, ContactEmail, ContactRole, IsPrimary, CreatedAt)
+                VALUES (@LocationId, @ContactName, @ContactPhone, @ContactEmail, @ContactRole, @IsPrimary, GETDATE())";
+
+            var result = await connection.ExecuteAsync(sql, contact);
+            return result > 0;
+        }
+
+        public async Task<bool> DeleteLocationContactsAsync(int locationId)
+        {
+            using var connection = _databaseService.CreateConnection();
+            var sql = "DELETE FROM LocationContacts WHERE LocationId = @LocationId";
+            await connection.ExecuteAsync(sql, new { LocationId = locationId });
+            return true;
+        }
     }
 
     // Schedule Service
@@ -549,10 +594,13 @@ namespace SummerSplashWeb.Services
     {
         Task<List<Schedule>> GetSchedulesAsync(DateTime startDate, DateTime endDate);
         Task<List<Schedule>> GetUserSchedulesAsync(int userId, DateTime startDate, DateTime endDate);
+        Task<List<Schedule>> GetPublishedUserSchedulesAsync(int userId, DateTime startDate, DateTime endDate);
         Task<Schedule?> GetScheduleByIdAsync(int scheduleId);
         Task<bool> CreateScheduleAsync(Schedule schedule);
         Task<bool> UpdateScheduleAsync(Schedule schedule);
         Task<bool> DeleteScheduleAsync(int scheduleId);
+        Task<bool> PublishSchedulesAsync(DateTime startDate, DateTime endDate, int publishedBy);
+        Task<List<Schedule>> GetUnpublishedSchedulesAsync(DateTime startDate, DateTime endDate);
     }
 
     public class ScheduleService : IScheduleService
@@ -569,6 +617,7 @@ namespace SummerSplashWeb.Services
             using var connection = _databaseService.CreateConnection();
             var sql = @"
                 SELECT s.*, u.FirstName + ' ' + u.LastName AS UserName,
+                       u.Email AS UserEmail, u.PhoneNumber AS UserPhone,
                        jl.Name AS LocationName,
                        sup.FirstName + ' ' + sup.LastName AS SupervisorName
                 FROM Schedules s
@@ -587,6 +636,7 @@ namespace SummerSplashWeb.Services
             using var connection = _databaseService.CreateConnection();
             var sql = @"
                 SELECT s.*, u.FirstName + ' ' + u.LastName AS UserName,
+                       u.Email AS UserEmail, u.PhoneNumber AS UserPhone,
                        jl.Name AS LocationName,
                        sup.FirstName + ' ' + sup.LastName AS SupervisorName
                 FROM Schedules s
@@ -601,11 +651,33 @@ namespace SummerSplashWeb.Services
             return schedules.ToList();
         }
 
+        public async Task<List<Schedule>> GetPublishedUserSchedulesAsync(int userId, DateTime startDate, DateTime endDate)
+        {
+            using var connection = _databaseService.CreateConnection();
+            var sql = @"
+                SELECT s.*, u.FirstName + ' ' + u.LastName AS UserName,
+                       u.Email AS UserEmail, u.PhoneNumber AS UserPhone,
+                       jl.Name AS LocationName,
+                       sup.FirstName + ' ' + sup.LastName AS SupervisorName
+                FROM Schedules s
+                INNER JOIN Users u ON s.UserId = u.UserId
+                INNER JOIN JobLocations jl ON s.LocationId = jl.LocationId
+                LEFT JOIN Users sup ON s.SupervisorId = sup.UserId
+                WHERE s.UserId = @UserId
+                  AND s.ScheduledDate >= @StartDate AND s.ScheduledDate <= @EndDate
+                  AND s.IsPublished = 1
+                ORDER BY s.ScheduledDate, s.StartTime";
+
+            var schedules = await connection.QueryAsync<Schedule>(sql, new { UserId = userId, StartDate = startDate, EndDate = endDate });
+            return schedules.ToList();
+        }
+
         public async Task<Schedule?> GetScheduleByIdAsync(int scheduleId)
         {
             using var connection = _databaseService.CreateConnection();
             var sql = @"
                 SELECT s.*, u.FirstName + ' ' + u.LastName AS UserName,
+                       u.Email AS UserEmail, u.PhoneNumber AS UserPhone,
                        jl.Name AS LocationName,
                        sup.FirstName + ' ' + sup.LastName AS SupervisorName
                 FROM Schedules s
@@ -621,8 +693,8 @@ namespace SummerSplashWeb.Services
         {
             using var connection = _databaseService.CreateConnection();
             var sql = @"
-                INSERT INTO Schedules (UserId, LocationId, ScheduledDate, StartTime, EndTime, SupervisorId, Notes, CreatedAt)
-                VALUES (@UserId, @LocationId, @ScheduledDate, @StartTime, @EndTime, @SupervisorId, @Notes, GETDATE())";
+                INSERT INTO Schedules (UserId, LocationId, ScheduledDate, StartTime, EndTime, SupervisorId, Notes, IsPublished, CreatedAt)
+                VALUES (@UserId, @LocationId, @ScheduledDate, @StartTime, @EndTime, @SupervisorId, @Notes, 0, GETDATE())";
 
             var result = await connection.ExecuteAsync(sql, schedule);
             return result > 0;
@@ -647,6 +719,39 @@ namespace SummerSplashWeb.Services
             var sql = "DELETE FROM Schedules WHERE ScheduleId = @ScheduleId";
             var result = await connection.ExecuteAsync(sql, new { ScheduleId = scheduleId });
             return result > 0;
+        }
+
+        public async Task<bool> PublishSchedulesAsync(DateTime startDate, DateTime endDate, int publishedBy)
+        {
+            using var connection = _databaseService.CreateConnection();
+            var sql = @"
+                UPDATE Schedules
+                SET IsPublished = 1, PublishedAt = GETDATE(), PublishedBy = @PublishedBy
+                WHERE ScheduledDate >= @StartDate AND ScheduledDate <= @EndDate
+                  AND IsPublished = 0";
+
+            var result = await connection.ExecuteAsync(sql, new { StartDate = startDate, EndDate = endDate, PublishedBy = publishedBy });
+            return result > 0;
+        }
+
+        public async Task<List<Schedule>> GetUnpublishedSchedulesAsync(DateTime startDate, DateTime endDate)
+        {
+            using var connection = _databaseService.CreateConnection();
+            var sql = @"
+                SELECT s.*, u.FirstName + ' ' + u.LastName AS UserName,
+                       u.Email AS UserEmail, u.PhoneNumber AS UserPhone,
+                       jl.Name AS LocationName,
+                       sup.FirstName + ' ' + sup.LastName AS SupervisorName
+                FROM Schedules s
+                INNER JOIN Users u ON s.UserId = u.UserId
+                INNER JOIN JobLocations jl ON s.LocationId = jl.LocationId
+                LEFT JOIN Users sup ON s.SupervisorId = sup.UserId
+                WHERE s.ScheduledDate >= @StartDate AND s.ScheduledDate <= @EndDate
+                  AND s.IsPublished = 0
+                ORDER BY s.ScheduledDate, s.StartTime";
+
+            var schedules = await connection.QueryAsync<Schedule>(sql, new { StartDate = startDate, EndDate = endDate });
+            return schedules.ToList();
         }
     }
 

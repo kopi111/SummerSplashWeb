@@ -25,6 +25,10 @@
     </div>
 }
 
+@{
+    var lifeguardEvaluations = ViewBag.LifeguardEvaluations as List<SummerSplashWeb.Models.SiteEvaluation> ?? new List<SummerSplashWeb.Models.SiteEvaluation>();
+}
+
 <!-- Report Type Tabs -->
 <div class="card mb-4" style="border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);">
     <div class="card-body p-0">
@@ -33,6 +37,12 @@
                 <button class="nav-link active" id="serviceTech-tab" data-bs-toggle="tab" data-bs-target="#serviceTech" type="button" role="tab">
                     <i class="bi bi-tools me-2"></i>Service Tech
                     <span class="badge bg-primary ms-2">@Model.Count</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="lifeguard-tab" data-bs-toggle="tab" data-bs-target="#lifeguard" type="button" role="tab">
+                    <i class="bi bi-life-preserver me-2"></i>Lifeguard
+                    <span class="badge bg-danger ms-2">@lifeguardEvaluations.Count</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -170,6 +180,92 @@
                 <div style="padding: 60px; text-align: center; color: #7b809a;">
                     <i class="bi bi-tools" style="font-size: 64px; opacity: 0.3;"></i>
                     <p class="mt-3 mb-0">No service tech reports found</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Lifeguard Evaluations -->
+    <div class="tab-pane fade" id="lifeguard" role="tabpanel">
+        <div class="custom-table">
+            <div style="padding: 20px; border-bottom: 1px solid #f1f3f5;">
+                <h5 class="mb-0" style="color: #344767; font-weight: 700;">
+                    <i class="bi bi-life-preserver me-2"></i>Lifeguard Shift Completions
+                </h5>
+                <small class="text-muted">Lifeguard shift reports, pool status, and incident tracking</small>
+            </div>
+            @if (lifeguardEvaluations.Any())
+            {
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Lifeguard</th>
+                            <th>Location</th>
+                            <th>Pool Status</th>
+                            <th>Safety</th>
+                            <th>Incidents</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var eval in lifeguardEvaluations.OrderByDescending(e => e.CreatedAt))
+                        {
+                            <tr class="clickable-row" style="cursor: pointer;" onclick="window.location.href='@Url.Action("EvaluationDetails", new { id = eval.EvaluationId })'">
+                                <td>
+                                    <div class="fw-bold">@eval.CreatedAt.ToString("MMM dd")</div>
+                                    <small class="text-muted">@eval.CreatedAt.ToString("hh:mm tt")</small>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm bg-danger text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                            @(eval.UserName?.Substring(0, 1).ToUpper() ?? "?")
+                                        </div>
+                                        <span class="fw-semibold">@eval.UserName</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-primary">@eval.LocationName</span></td>
+                                <td>
+                                    @if (eval.PoolOpen == true)
+                                    {
+                                        <span class="badge bg-success">Open</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Closed</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 20px; width: 80px;">
+                                        <div class="progress-bar @(eval.SafetyCompliancePercentage >= 80 ? "bg-success" : eval.SafetyCompliancePercentage >= 50 ? "bg-warning" : "bg-danger")"
+                                             style="width: @(eval.SafetyCompliancePercentage)%">
+                                            @(eval.SafetyCompliancePercentage)%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(eval.SafetyConcernsNotes))
+                                    {
+                                        <span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i>Reported</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-check me-1"></i>None</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-danger"><i class="bi bi-eye"></i> View</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div style="padding: 60px; text-align: center; color: #7b809a;">
+                    <i class="bi bi-life-preserver" style="font-size: 64px; opacity: 0.3;"></i>
+                    <p class="mt-3 mb-0">No lifeguard reports found</p>
                 </div>
             }
         </div>

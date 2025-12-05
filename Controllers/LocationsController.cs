@@ -9,11 +9,16 @@ namespace SummerSplashWeb.Controllers
     public class LocationsController : Controller
     {
         private readonly ILocationService _locationService;
+        private readonly IUserService _userService;
         private readonly ILogger<LocationsController> _logger;
 
-        public LocationsController(ILocationService locationService, ILogger<LocationsController> logger)
+        public LocationsController(
+            ILocationService locationService,
+            IUserService userService,
+            ILogger<LocationsController> logger)
         {
             _locationService = locationService;
+            _userService = userService;
             _logger = logger;
         }
 
@@ -41,6 +46,10 @@ namespace SummerSplashWeb.Controllers
                 if (location == null)
                     return NotFound();
 
+                // Load contacts for this location
+                var contacts = await _locationService.GetLocationContactsAsync(id);
+                ViewBag.Contacts = contacts;
+
                 return View(location);
             }
             catch (Exception ex)
@@ -51,30 +60,83 @@ namespace SummerSplashWeb.Controllers
         }
 
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
+            try
+            {
+                // Get employees for supervisor dropdown
+                var employees = await _userService.GetAllUsersAsync();
+                ViewBag.Employees = employees;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading employees for location create");
+                ViewBag.Employees = new List<User>();
+            }
+
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(JobLocation location)
+        public async Task<IActionResult> Create(JobLocation location,
+            string? Contact1Name, string? Contact1Role, string? Contact1Phone, string? Contact1Email,
+            string? Contact2Name, string? Contact2Role, string? Contact2Phone, string? Contact2Email)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    await _locationService.CreateLocationAsync(location);
+                    // Create the location
+                    var locationId = await _locationService.CreateLocationAsync(location);
+
+                    // Create contacts if provided
+                    if (!string.IsNullOrWhiteSpace(Contact1Name))
+                    {
+                        var contact1 = new LocationContact
+                        {
+                            LocationId = locationId,
+                            ContactName = Contact1Name,
+                            ContactRole = Contact1Role,
+                            ContactPhone = Contact1Phone,
+                            ContactEmail = Contact1Email,
+                            IsPrimary = true,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        await _locationService.CreateLocationContactAsync(contact1);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(Contact2Name))
+                    {
+                        var contact2 = new LocationContact
+                        {
+                            LocationId = locationId,
+                            ContactName = Contact2Name,
+                            ContactRole = Contact2Role,
+                            ContactPhone = Contact2Phone,
+                            ContactEmail = Contact2Email,
+                            IsPrimary = false,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        await _locationService.CreateLocationContactAsync(contact2);
+                    }
+
                     TempData["Success"] = "Location created successfully!";
                     return RedirectToAction(nameof(Index));
                 }
 
+                // Reload employees if validation fails
+                var employees = await _userService.GetAllUsersAsync();
+                ViewBag.Employees = employees;
                 return View(location);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating location");
                 ModelState.AddModelError("", "Error creating location. Please try again.");
+
+                var employees = await _userService.GetAllUsersAsync();
+                ViewBag.Employees = employees;
                 return View(location);
             }
         }
@@ -88,6 +150,14 @@ namespace SummerSplashWeb.Controllers
                 if (location == null)
                     return NotFound();
 
+                // Get employees for supervisor dropdown
+                var employees = await _userService.GetAllUsersAsync();
+                ViewBag.Employees = employees;
+
+                // Get existing contacts
+                var contacts = await _locationService.GetLocationContactsAsync(id);
+                ViewBag.Contacts = contacts;
+
                 return View(location);
             }
             catch (Exception ex)
@@ -99,7 +169,9 @@ namespace SummerSplashWeb.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, JobLocation location)
+        public async Task<IActionResult> Edit(int id, JobLocation location,
+            string? Contact1Name, string? Contact1Role, string? Contact1Phone, string? Contact1Email,
+            string? Contact2Name, string? Contact2Role, string? Contact2Phone, string? Contact2Email)
         {
             try
             {
@@ -109,16 +181,55 @@ namespace SummerSplashWeb.Controllers
                 if (ModelState.IsValid)
                 {
                     await _locationService.UpdateLocationAsync(location);
+
+                    // Delete existing contacts and recreate
+                    await _locationService.DeleteLocationContactsAsync(id);
+
+                    if (!string.IsNullOrWhiteSpace(Contact1Name))
+                    {
+                        var contact1 = new LocationContact
+                        {
+                            LocationId = id,
+                            ContactName = Contact1Name,
+                            ContactRole = Contact1Role,
+                            ContactPhone = Contact1Phone,
+                            ContactEmail = Contact1Email,
+                            IsPrimary = true,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        await _locationService.CreateLocationContactAsync(contact1);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(Contact2Name))
+                    {
+                        var contact2 = new LocationContact
+                        {
+                            LocationId = id,
+                            ContactName = Contact2Name,
+                            ContactRole = Contact2Role,
+                            ContactPhone = Contact2Phone,
+                            ContactEmail = Contact2Email,
+                            IsPrimary = false,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        await _locationService.CreateLocationContactAsync(contact2);
+                    }
+
                     TempData["Success"] = "Location updated successfully!";
                     return RedirectToAction(nameof(Index));
                 }
 
+                var employees = await _userService.GetAllUsersAsync();
+                ViewBag.Employees = employees;
                 return View(location);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating location");
                 ModelState.AddModelError("", "Error updating location. Please try again.");
+
+                var employees = await _userService.GetAllUsersAsync();
+                ViewBag.Employees = employees;
                 return View(location);
             }
         }
@@ -129,6 +240,8 @@ namespace SummerSplashWeb.Controllers
         {
             try
             {
+                // Delete contacts first
+                await _locationService.DeleteLocationContactsAsync(id);
                 await _locationService.DeleteLocationAsync(id);
                 TempData["Success"] = "Location deleted successfully!";
                 return RedirectToAction(nameof(Index));

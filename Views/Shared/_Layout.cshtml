@@ -477,15 +477,21 @@
                 </a>
             </div>
             <div class="menu-item">
-                <a href="@Url.Action("MissedPunches", "Clock")" class="@(ViewContext.RouteData.Values["action"]?.ToString() == "MissedPunches" ? "active" : "")">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    <span>Missed Punches</span>
+                <a href="@Url.Action("Punches", "Clock")" class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Punches" ? "active" : "")">
+                    <i class="bi bi-clock"></i>
+                    <span>Punches</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="@Url.Action("WorkHistoryByDay", "Clock")" class="@(ViewContext.RouteData.Values["action"]?.ToString() == "WorkHistoryByDay" ? "active" : "")">
+                    <i class="bi bi-calendar-day"></i>
+                    <span>Daily Work History</span>
                 </a>
             </div>
             <div class="menu-item">
                 <a href="@Url.Action("WorkHistory", "Clock")" class="@(ViewContext.RouteData.Values["action"]?.ToString() == "WorkHistory" ? "active" : "")">
                     <i class="bi bi-journal-check"></i>
-                    <span>Work History</span>
+                    <span>Employee History</span>
                 </a>
             </div>
             <div class="menu-item">

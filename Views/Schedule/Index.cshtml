@@ -3,9 +3,9 @@
 @{
     ViewData["Title"] = "Employee Schedules";
     var view = ViewBag.View as string ?? "employees";
-    var selectedDate = (DateTime)ViewBag.SelectedDate;
-    var startDate = (DateTime)ViewBag.StartDate;
-    var endDate = (DateTime)ViewBag.EndDate;
+    var selectedDate = ViewBag.SelectedDate as DateTime? ?? DateTime.Now;
+    var startDate = ViewBag.StartDate as DateTime? ?? DateTime.Now;
+    var endDate = ViewBag.EndDate as DateTime? ?? DateTime.Now;
     var schedules = ViewBag.Schedules as List<Schedule> ?? new List<Schedule>();
     var users = ViewBag.Users as List<User> ?? new List<User>();
     var locations = ViewBag.Locations as List<JobLocation> ?? new List<JobLocation>();
@@ -20,13 +20,34 @@
             <h2 class="mb-1"><i class="bi bi-calendar-week me-2"></i>Employee Schedules</h2>
             <p class="text-muted mb-0">View and manage employee work schedules</p>
         </div>
-        <div>
-            <a href="@Url.Action("Create", new { date = selectedDate })" class="btn btn-success me-2">
+        <div class="d-flex gap-2">
+            <a href="@Url.Action("Create", new { date = selectedDate })" class="btn btn-success">
                 <i class="bi bi-plus-circle me-2"></i>Add Schedule
             </a>
             <a href="@Url.Action("CreateFourWeek", new { startDate = startDate })" class="btn btn-primary">
                 <i class="bi bi-calendar4-week me-2"></i>4-Week Schedule
             </a>
+            @{
+                var unpublishedCount = schedules.Count(s => !s.IsPublished);
+            }
+            @if (unpublishedCount > 0)
+            {
+                <form asp-action="Publish" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="startDate" value="@startDate.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="endDate" value="@endDate.ToString("yyyy-MM-dd")" />
+                    <button type="submit" class="btn btn-warning"
+                            onclick="return confirm('This will publish @unpublishedCount schedule(s) and send notifications to employees via email and SMS. Continue?');">
+                        <i class="bi bi-send me-2"></i>Publish Schedules (@unpublishedCount)
+                    </button>
+                </form>
+            }
+            else
+            {
+                <button class="btn btn-outline-secondary" disabled>
+                    <i class="bi bi-check-circle me-2"></i>All Published
+                </button>
+            }
         </div>
     </div>
 
@@ -35,6 +56,14 @@
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Warning"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Warning"]
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }

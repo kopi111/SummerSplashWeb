@@ -1,0 +1,180 @@
+@model SummerSplashWeb.Models.User
+@{
+    ViewData["Title"] = "Add Employee";
+}
+
+<div class="mb-3">
+    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Back to Employees
+    </a>
+</div>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        @ViewBag.Error
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card" style="border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);">
+    <div class="card-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border-radius: 15px 15px 0 0;">
+        <h5 class="mb-0">
+            <i class="bi bi-person-plus me-2"></i>Add New Employee
+        </h5>
+    </div>
+    <div class="card-body p-4">
+        <form method="post" asp-action="Create">
+            @Html.AntiForgeryToken()
+
+            <div class="row g-3">
+                <!-- Personal Information -->
+                <div class="col-12">
+                    <h6 class="text-muted mb-3">
+                        <i class="bi bi-person me-2"></i>Personal Information
+                    </h6>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="FirstName" class="form-label fw-semibold">
+                        First Name <span class="text-danger">*</span>
+                    </label>
+                    <input asp-for="FirstName" class="form-control" required placeholder="Enter first name" />
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="LastName" class="form-label fw-semibold">
+                        Last Name <span class="text-danger">*</span>
+                    </label>
+                    <input asp-for="LastName" class="form-control" required placeholder="Enter last name" />
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Email" class="form-label fw-semibold">
+                        Email <span class="text-danger">*</span>
+                    </label>
+                    <input asp-for="Email" class="form-control" type="email" required placeholder="email@example.com" />
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="PhoneNumber" class="form-label fw-semibold">
+                        Phone Number
+                    </label>
+                    <input asp-for="PhoneNumber" class="form-control" type="tel" placeholder="(555) 555-5555" />
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Position" class="form-label fw-semibold">
+                        Position <span class="text-danger">*</span>
+                    </label>
+                    <select asp-for="Position" class="form-select" required>
+                        <option value="">Select Position</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Manager">Manager</option>
+                        <option value="Service Tech">Service Tech</option>
+                        <option value="Pool Technician">Pool Technician</option>
+                        <option value="Lifeguard">Lifeguard</option>
+                        <option value="Supervisor">Supervisor</option>
+                        <option value="Maintenance">Maintenance</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="HireDate" class="form-label fw-semibold">
+                        Hire Date
+                    </label>
+                    <input asp-for="HireDate" class="form-control" type="date" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                </div>
+
+                <div class="col-12">
+                    <label asp-for="Address" class="form-label fw-semibold">
+                        Address
+                    </label>
+                    <input asp-for="Address" class="form-control" placeholder="Street address, City, State, ZIP" />
+                </div>
+
+                <!-- Emergency Contact -->
+                <div class="col-12 mt-4">
+                    <h6 class="text-muted mb-3">
+                        <i class="bi bi-telephone me-2"></i>Emergency Contact
+                    </h6>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="EmergencyContact" class="form-label fw-semibold">
+                        Contact Name
+                    </label>
+                    <input asp-for="EmergencyContact" class="form-control" placeholder="Emergency contact name" />
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="EmergencyPhone" class="form-label fw-semibold">
+                        Contact Phone
+                    </label>
+                    <input asp-for="EmergencyPhone" class="form-control" type="tel" placeholder="(555) 555-5555" />
+                </div>
+
+                <!-- Notes -->
+                <div class="col-12 mt-4">
+                    <label asp-for="Notes" class="form-label fw-semibold">
+                        Notes
+                    </label>
+                    <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Additional notes about this employee..."></textarea>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="col-12 mt-4">
+                    <hr>
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="@Url.Action("Index")" class="btn btn-outline-secondary px-4">
+                            <i class="bi bi-x-circle me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success px-4">
+                            <i class="bi bi-person-plus me-2"></i>Add Employee
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="alert alert-info mt-4">
+    <i class="bi bi-info-circle me-2"></i>
+    <strong>Note:</strong> The employee will be created with a temporary password and a "Pending" status.
+    They will need to reset their password on first login and be approved by a manager.
+</div>
+
+<style>
+    .form-control, .form-select {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 10px 14px;
+        transition: all 0.3s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.15);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+    }
+
+    h6 {
+        font-weight: 700;
+        color: #344767;
+    }
+</style>

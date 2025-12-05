@@ -12,10 +12,15 @@ namespace SummerSplashWeb.Models
         public TimeSpan? StartTime { get; set; }
         public TimeSpan? EndTime { get; set; }
         public string? Notes { get; set; }
+        public bool IsPublished { get; set; } = false;
+        public DateTime? PublishedAt { get; set; }
+        public int? PublishedBy { get; set; }
         public DateTime CreatedAt { get; set; }
 
         // Navigation properties
         public string? UserName { get; set; }
+        public string? UserEmail { get; set; }
+        public string? UserPhone { get; set; }
         public string? LocationName { get; set; }
         public string? SupervisorName { get; set; }
 

@@ -156,7 +156,7 @@ namespace SummerSplashWeb.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> MissedPunches(DateTime? date = null)
+        public async Task<IActionResult> Punches(DateTime? date = null, string? filter = null)
         {
             try
             {
@@ -188,13 +188,133 @@ namespace SummerSplashWeb.Controllers
                 ViewBag.Schedules = schedules;
                 ViewBag.ClockRecords = clockRecords;
                 ViewBag.GracePeriodMinutes = GRACE_PERIOD_MINUTES;
+                ViewBag.Filter = filter;
 
                 return View();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading missed punches");
-                TempData["Error"] = "Error loading missed punches data.";
+                _logger.LogError(ex, "Error loading punches");
+                TempData["Error"] = "Error loading punches data.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // Redirect old MissedPunches route to new Punches
+        [HttpGet]
+        public IActionResult MissedPunches(DateTime? date = null)
+        {
+            return RedirectToAction(nameof(Punches), new { date });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> WorkHistoryByDay(DateTime? date = null)
+        {
+            try
+            {
+                var selectedDate = date ?? DateTime.Today;
+                var users = await _userService.GetAllUsersAsync();
+                var locations = await _locationService.GetAllLocationsAsync();
+
+                // Get all clock records for the selected date
+                using var connection = ((DatabaseService)Request.HttpContext.RequestServices.GetService<IDatabaseService>()!).CreateConnection();
+                var sql = @"SELECT cr.*, u.FirstName + ' ' + u.LastName AS UserName, u.Position, jl.Name AS LocationName
+                            FROM ClockRecords cr
+                            INNER JOIN Users u ON cr.UserId = u.UserId
+                            INNER JOIN JobLocations jl ON cr.LocationId = jl.LocationId
+                            WHERE CAST(cr.ClockInTime AS DATE) = @Date
+                            ORDER BY cr.ClockInTime DESC";
+                var clockRecords = (await Dapper.SqlMapper.QueryAsync<ClockRecord>(connection, sql, new { Date = selectedDate.Date })).ToList();
+
+                // Calculate totals
+                var totalHours = clockRecords.Where(r => r.TotalHours.HasValue).Sum(r => r.TotalHours!.Value);
+                var totalWorkers = clockRecords.Select(r => r.UserId).Distinct().Count();
+
+                ViewBag.SelectedDate = selectedDate;
+                ViewBag.Users = users;
+                ViewBag.Locations = locations;
+                ViewBag.ClockRecords = clockRecords;
+                ViewBag.TotalHours = totalHours;
+                ViewBag.TotalWorkers = totalWorkers;
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading work history by day");
+                TempData["Error"] = "Error loading work history data.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditRecord(int id)
+        {
+            try
+            {
+                using var connection = ((DatabaseService)Request.HttpContext.RequestServices.GetService<IDatabaseService>()!).CreateConnection();
+                var sql = @"SELECT cr.*, u.FirstName + ' ' + u.LastName AS UserName, jl.Name AS LocationName
+                            FROM ClockRecords cr
+                            INNER JOIN Users u ON cr.UserId = u.UserId
+                            INNER JOIN JobLocations jl ON cr.LocationId = jl.LocationId
+                            WHERE cr.RecordId = @RecordId";
+                var record = await Dapper.SqlMapper.QueryFirstOrDefaultAsync<ClockRecord>(connection, sql, new { RecordId = id });
+
+                if (record == null)
+                {
+                    TempData["Error"] = "Record not found.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var locations = await _locationService.GetAllLocationsAsync();
+                ViewBag.Locations = locations;
+
+                return View(record);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading record for edit");
+                TempData["Error"] = "Error loading record.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditRecord(int id, ClockRecord record)
+        {
+            try
+            {
+                using var connection = ((DatabaseService)Request.HttpContext.RequestServices.GetService<IDatabaseService>()!).CreateConnection();
+
+                // Calculate total hours if both times are provided
+                decimal? totalHours = null;
+                if (record.ClockOutTime.HasValue)
+                {
+                    totalHours = (decimal)(record.ClockOutTime.Value - record.ClockInTime).TotalHours;
+                }
+
+                var sql = @"UPDATE ClockRecords
+                            SET ClockInTime = @ClockInTime, ClockOutTime = @ClockOutTime,
+                                LocationId = @LocationId, TotalHours = @TotalHours
+                            WHERE RecordId = @RecordId";
+
+                await Dapper.SqlMapper.ExecuteAsync(connection, sql, new
+                {
+                    RecordId = id,
+                    record.ClockInTime,
+                    record.ClockOutTime,
+                    record.LocationId,
+                    TotalHours = totalHours
+                });
+
+                TempData["Success"] = "Clock record updated successfully.";
+                return RedirectToAction(nameof(WorkHistoryByDay), new { date = record.ClockInTime.Date });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating record");
+                TempData["Error"] = "Error updating record.";
                 return RedirectToAction(nameof(Index));
             }
         }

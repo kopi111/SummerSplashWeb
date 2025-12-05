@@ -76,6 +76,7 @@ namespace SummerSplashWeb.Controllers
                 ViewBag.ManagerEvaluations = siteEvaluations.Where(e => e.EvaluationType == "Manager").ToList();
                 ViewBag.SupervisorEvaluations = siteEvaluations.Where(e => e.EvaluationType == "Supervisor").ToList();
                 ViewBag.SafetyAudits = siteEvaluations.Where(e => e.EvaluationType == "Safety Audit").ToList();
+                ViewBag.LifeguardEvaluations = siteEvaluations.Where(e => e.EvaluationType == "Lifeguard").ToList();
 
                 return View(reports);
             }

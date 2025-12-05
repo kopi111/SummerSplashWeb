@@ -153,6 +153,79 @@ namespace SummerSplashWeb.Controllers
         }
 
         [HttpGet]
+        public IActionResult Create()
+        {
+            return View(new User());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(User user)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(user.Email))
+                {
+                    ViewBag.Error = "Email is required.";
+                    return View(user);
+                }
+
+                // Set default password hash (user will reset on first login)
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword("TempPassword123!");
+                user.Status = "Pending";
+                user.CreatedAt = DateTime.Now;
+
+                var result = await _userService.CreateUserAsync(user);
+                if (result)
+                {
+                    TempData["Success"] = $"Employee {user.FirstName} {user.LastName} created successfully.";
+                    return RedirectToAction(nameof(Index));
+                }
+                else
+                {
+                    ViewBag.Error = "Failed to create employee.";
+                    return View(user);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating employee");
+                ViewBag.Error = "An error occurred while creating the employee.";
+                return View(user);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GenerateInviteLink(string email, string position)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    TempData["Error"] = "Email is required to generate an invite link.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var inviteCode = await _userService.GenerateInviteLinkAsync(email, position ?? "Employee");
+
+                // The invite link would be your app's URL + the invite code
+                var inviteLink = $"{Request.Scheme}://{Request.Host}/Account/Register?invite={inviteCode}";
+
+                TempData["Success"] = $"Invite link generated for {email}.";
+                TempData["InviteLink"] = inviteLink;
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating invite link");
+                TempData["Error"] = "Failed to generate invite link.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
             try

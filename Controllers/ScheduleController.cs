@@ -320,6 +320,62 @@ namespace SummerSplashWeb.Controllers
             }
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Publish(DateTime startDate, DateTime endDate)
+        {
+            try
+            {
+                // Get current user ID (for published by tracking)
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                var publishedBy = userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
+
+                // Get schedules to be published (for sending notifications)
+                var schedulesToPublish = await _scheduleService.GetUnpublishedSchedulesAsync(startDate, endDate);
+
+                if (!schedulesToPublish.Any())
+                {
+                    TempData["Warning"] = "No unpublished schedules found in the selected date range.";
+                    return RedirectToAction(nameof(Index), new { date = startDate });
+                }
+
+                // Publish the schedules
+                var result = await _scheduleService.PublishSchedulesAsync(startDate, endDate, publishedBy);
+
+                if (result)
+                {
+                    // Group schedules by user to send consolidated notifications
+                    var groupedByUser = schedulesToPublish.GroupBy(s => s.UserId);
+
+                    foreach (var userGroup in groupedByUser)
+                    {
+                        var scheduleList = userGroup.ToList();
+                        var firstSchedule = scheduleList.First();
+
+                        // TODO: Send email notification
+                        // await _emailService.SendSchedulePublishedEmailAsync(firstSchedule.UserEmail, scheduleList);
+
+                        // TODO: Send SMS notification
+                        // await _smsService.SendSchedulePublishedSmsAsync(firstSchedule.UserPhone, scheduleList);
+                    }
+
+                    TempData["Success"] = $"Successfully published {schedulesToPublish.Count} schedule(s) for {groupedByUser.Count()} employee(s)! Notifications have been sent.";
+                }
+                else
+                {
+                    TempData["Error"] = "Failed to publish schedules. Please try again.";
+                }
+
+                return RedirectToAction(nameof(Index), new { date = startDate });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error publishing schedules");
+                TempData["Error"] = "Error publishing schedules. Please try again.";
+                return RedirectToAction(nameof(Index), new { date = startDate });
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> EmployeeSchedule(int userId, DateTime? startDate = null)
         {

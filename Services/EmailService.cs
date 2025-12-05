@@ -152,7 +152,7 @@ public class EmailService : IEmailService
 
             var mailMessage = new MailMessage
             {
-                From = new MailAddress(senderEmail, senderName),
+                From = new MailAddress(senderEmail ?? "noreply@summersplash.com", senderName),
                 Subject = subject,
                 Body = body,
                 IsBodyHtml = true

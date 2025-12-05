@@ -1,0 +1,850 @@
+================================================================================
+                    SUMMER SPLASH WEB APPLICATION
+                    COMPREHENSIVE TEST CHECKLIST
+================================================================================
+Date Created: December 5, 2025
+Version: 1.0
+================================================================================
+
+================================================================================
+                            TABLE OF CONTENTS
+================================================================================
+1. AUTHENTICATION & AUTHORIZATION
+2. DASHBOARD
+3. EMPLOYEES (USERS) - CRUD
+4. LOCATIONS - CRUD
+5. SCHEDULES - CRUD
+6. TIME CLOCK / PUNCHES
+7. WORK HISTORY
+8. REPORTS
+9. API ENDPOINTS
+10. NAVIGATION & UI
+11. DATABASE OPERATIONS
+12. NOTIFICATIONS
+13. ERROR HANDLING
+14. SECURITY
+================================================================================
+
+
+================================================================================
+1. AUTHENTICATION & AUTHORIZATION
+================================================================================
+
+[ ] 1.1 LOGIN
+    [ ] Login with valid credentials
+    [ ] Login with invalid email
+    [ ] Login with invalid password
+    [ ] Login with empty fields
+    [ ] Remember me functionality
+    [ ] Password visibility toggle
+    [ ] Redirect to dashboard after login
+    [ ] Session timeout handling
+
+[ ] 1.2 LOGOUT
+    [ ] Logout button works
+    [ ] Session is destroyed
+    [ ] Redirect to login page
+    [ ] Cannot access protected pages after logout
+
+[ ] 1.3 REGISTRATION (via Invite Link)
+    [ ] Valid invite link works
+    [ ] Expired invite link shows error
+    [ ] Used invite link shows error
+    [ ] Invalid invite link shows error
+    [ ] Password requirements validation
+    [ ] Email validation
+    [ ] New user created with "Pending" status
+
+[ ] 1.4 AUTHORIZATION
+    [ ] Admin can access all pages
+    [ ] Manager can access appropriate pages
+    [ ] Employee restricted from admin functions
+    [ ] Unauthorized access redirects properly
+
+
+================================================================================
+2. DASHBOARD
+================================================================================
+
+[ ] 2.1 STATISTICS DISPLAY
+    [ ] Total Employees count displays correctly
+    [ ] Active Shifts count displays correctly
+    [ ] Today's Reports count displays correctly
+    [ ] Pending Approvals count displays correctly
+    [ ] Total Locations count displays correctly
+    [ ] Hours Today displays correctly
+    [ ] Scheduled Shifts count displays correctly
+    [ ] Issues Today (punches) count displays correctly
+
+[ ] 2.2 CLICKABLE STAT CARDS
+    [ ] Total Employees links to /Users
+    [ ] Active Shifts links to /Clock/CurrentlyClocked
+    [ ] Today's Reports links to /Reports
+    [ ] Pending Approvals links to /Users?status=Pending
+    [ ] Locations links to /Locations
+    [ ] Hours Today links to /Clock/WorkHistoryByDay
+    [ ] Scheduled Shifts links to /Schedule
+    [ ] Issues Today links to /Clock/Punches
+
+[ ] 2.3 ACTIVE SHIFTS TABLE
+    [ ] Shows currently clocked in employees
+    [ ] Displays employee name
+    [ ] Displays location
+    [ ] Displays clock in time
+    [ ] Displays duration (auto-updating)
+    [ ] Empty state when no active shifts
+
+[ ] 2.4 RECENT REPORTS TABLE
+    [ ] Shows last 5 reports
+    [ ] Displays technician name
+    [ ] Displays location
+    [ ] Displays date
+    [ ] Displays status
+    [ ] Clicking row navigates to report details
+
+[ ] 2.5 PENDING APPROVALS SECTION
+    [ ] Shows when there are pending users
+    [ ] Hidden when no pending users
+    [ ] Displays user name, email, position, date
+    [ ] Review button links to user details
+
+[ ] 2.6 AUTO-REFRESH
+    [ ] Dashboard refreshes every 30 seconds
+    [ ] No page flicker during refresh
+    [ ] Data updates correctly
+
+
+================================================================================
+3. EMPLOYEES (USERS) - CRUD OPERATIONS
+================================================================================
+
+[ ] 3.1 CREATE EMPLOYEE
+    [ ] "Add Employee" button visible
+    [ ] Create form loads correctly
+    [ ] Required fields: First Name, Last Name, Email, Position
+    [ ] Optional fields: Phone, Address, Emergency Contact, Emergency Phone, Hire Date, Notes
+    [ ] Email validation works
+    [ ] Phone format validation
+    [ ] Submit creates employee with "Pending" status
+    [ ] Success message displays
+    [ ] Redirect to employee list
+
+[ ] 3.2 READ EMPLOYEES (LIST)
+    [ ] Employee list loads
+    [ ] Displays: Name, Email, Position, Phone, Status
+    [ ] Search by name works
+    [ ] Search by email works
+    [ ] Filter by Position works
+    [ ] Filter by Status works
+    [ ] Pagination works (if applicable)
+    [ ] View button works
+    [ ] Edit button works
+
+[ ] 3.3 READ EMPLOYEE (DETAILS)
+    [ ] Details page loads
+    [ ] All fields display correctly
+    [ ] Profile picture displays (if set)
+    [ ] Created date displays
+    [ ] Status badge shows correctly
+    [ ] Action buttons visible (Approve/Deactivate/Activate/Delete)
+
+[ ] 3.4 UPDATE EMPLOYEE
+    [ ] Edit form loads with current data
+    [ ] First Name editable and saves
+    [ ] Last Name editable and saves
+    [ ] Phone Number editable and saves
+    [ ] Position editable and saves
+    [ ] Address editable and saves
+    [ ] Emergency Contact editable and saves
+    [ ] Emergency Phone editable and saves
+    [ ] Hire Date editable and saves
+    [ ] Status editable and saves
+    [ ] Notes editable and saves
+    [ ] Profile Picture editable and saves
+    [ ] Success message displays
+    [ ] Changes persist in database
+
+[ ] 3.5 DELETE EMPLOYEE
+    [ ] Delete button visible
+    [ ] Confirmation dialog appears
+    [ ] Cancel cancels deletion
+    [ ] Confirm deletes employee
+    [ ] Success message displays
+    [ ] Employee removed from list
+
+[ ] 3.6 EMPLOYEE STATUS ACTIONS
+    [ ] Approve User - changes status to "Approved"
+    [ ] Deactivate User - changes IsActive to false
+    [ ] Activate User - changes IsActive to true
+    [ ] Status changes reflect immediately
+
+[ ] 3.7 INVITE LINK FUNCTIONALITY
+    [ ] "Send Invite" button visible
+    [ ] Modal opens correctly
+    [ ] Email field required
+    [ ] Position dropdown works
+    [ ] Generate button creates link
+    [ ] Invite link displays in alert
+    [ ] Copy button copies to clipboard
+    [ ] Link stored in database with expiration
+
+
+================================================================================
+4. LOCATIONS - CRUD OPERATIONS
+================================================================================
+
+[ ] 4.1 CREATE LOCATION
+    [ ] "Add Location" button visible
+    [ ] Create form loads correctly
+    [ ] Required fields: Name, Address
+    [ ] Optional fields: City, State, ZipCode, Country, Latitude, Longitude,
+                         Radius, Contact Name, Contact Phone, Contact Email,
+                         Pool Type, Pool Size, Notes
+    [ ] Address autocomplete/geocoding (if implemented)
+    [ ] Map preview shows location
+    [ ] Submit creates location
+    [ ] Success message displays
+    [ ] Redirect to location list
+
+[ ] 4.2 READ LOCATIONS (LIST)
+    [ ] Location list loads
+    [ ] Displays: Name, Address, Contact, Pool Type, Status
+    [ ] Search by name works
+    [ ] Filter by Pool Type works
+    [ ] Filter by Active status works
+    [ ] View button works
+    [ ] Edit button works
+    [ ] Map view shows all locations (if implemented)
+
+[ ] 4.3 READ LOCATION (DETAILS)
+    [ ] Details page loads
+    [ ] All fields display correctly
+    [ ] Map shows location pin
+    [ ] Contact information displays
+    [ ] Pool information displays
+    [ ] Notes display
+
+[ ] 4.4 UPDATE LOCATION
+    [ ] Edit form loads with current data
+    [ ] Name editable and saves
+    [ ] Address editable and saves
+    [ ] City editable and saves
+    [ ] State editable and saves
+    [ ] ZipCode editable and saves
+    [ ] Country editable and saves
+    [ ] Latitude/Longitude editable and saves
+    [ ] Radius editable and saves
+    [ ] Contact Name editable and saves
+    [ ] Contact Phone editable and saves
+    [ ] Contact Email editable and saves
+    [ ] Pool Type editable and saves
+    [ ] Pool Size editable and saves
+    [ ] Notes editable and saves
+    [ ] IsActive toggle works
+    [ ] Map updates with new coordinates
+    [ ] Success message displays
+
+[ ] 4.5 DELETE LOCATION
+    [ ] Delete button visible
+    [ ] Confirmation dialog appears
+    [ ] Cancel cancels deletion
+    [ ] Confirm deletes location
+    [ ] Success message displays
+    [ ] Location removed from list
+
+[ ] 4.6 MAP FUNCTIONALITY
+    [ ] Map loads correctly
+    [ ] Location pins display
+    [ ] Address geocoding works
+    [ ] Pin updates when address changes
+    [ ] Clicking pin shows location info
+
+
+================================================================================
+5. SCHEDULES - CRUD OPERATIONS
+================================================================================
+
+[ ] 5.1 CREATE SCHEDULE
+    [ ] "Add Schedule" button visible
+    [ ] Create form loads correctly
+    [ ] Date picker works
+    [ ] Employee dropdown populated
+    [ ] Location dropdown populated
+    [ ] Supervisor dropdown populated
+    [ ] Start Time picker works
+    [ ] End Time picker works
+    [ ] Notes field works
+    [ ] Submit creates schedule (unpublished)
+    [ ] Success message displays
+
+[ ] 5.2 CREATE 4-WEEK SCHEDULE
+    [ ] "4-Week Schedule" button visible
+    [ ] Start date picker works
+    [ ] Weekly schedule grid displays
+    [ ] Can assign employees to days
+    [ ] Can set times for each assignment
+    [ ] Submit creates multiple schedules
+    [ ] All schedules created as unpublished
+
+[ ] 5.3 READ SCHEDULES (CALENDAR VIEW)
+    [ ] Week view loads correctly
+    [ ] Month view loads correctly
+    [ ] 4-Week view loads correctly
+    [ ] Day navigation works (Previous/Today/Next)
+    [ ] Date picker navigation works
+    [ ] Schedules display on correct days
+    [ ] Published schedules show differently from unpublished
+    [ ] Location filter works
+    [ ] Employee filter works
+
+[ ] 5.4 READ SCHEDULE (DETAILS)
+    [ ] Click on schedule opens details
+    [ ] Shows employee name
+    [ ] Shows location
+    [ ] Shows date and times
+    [ ] Shows supervisor
+    [ ] Shows notes
+    [ ] Shows published status
+
+[ ] 5.5 UPDATE SCHEDULE
+    [ ] Edit button/action works
+    [ ] Edit form loads with current data
+    [ ] Employee changeable
+    [ ] Location changeable
+    [ ] Date changeable
+    [ ] Times changeable
+    [ ] Supervisor changeable
+    [ ] Notes changeable
+    [ ] Submit updates schedule
+    [ ] Success message displays
+
+[ ] 5.6 DELETE SCHEDULE
+    [ ] Delete button/action visible
+    [ ] Confirmation dialog appears
+    [ ] Cancel cancels deletion
+    [ ] Confirm deletes schedule
+    [ ] Success message displays
+    [ ] Schedule removed from calendar
+
+[ ] 5.7 PUBLISH SCHEDULES
+    [ ] "Publish Schedules" button visible
+    [ ] Shows count of unpublished schedules
+    [ ] Confirmation dialog appears
+    [ ] Cancel cancels publish
+    [ ] Confirm publishes schedules
+    [ ] IsPublished set to true
+    [ ] PublishedAt timestamp set
+    [ ] PublishedBy user recorded
+    [ ] Success message with count displays
+    [ ] Email notifications sent (TODO - check integration)
+    [ ] SMS notifications sent (TODO - check integration)
+
+[ ] 5.8 EMPLOYEE SCHEDULE VIEW
+    [ ] Employees see only published schedules
+    [ ] Unpublished schedules hidden from employees
+    [ ] My Schedule page works
+    [ ] Shows correct dates and times
+    [ ] Shows location information
+
+
+================================================================================
+6. TIME CLOCK / PUNCHES
+================================================================================
+
+[ ] 6.1 CLOCK INDEX PAGE
+    [ ] Page loads correctly
+    [ ] Shows active shifts
+    [ ] Shows today's records
+    [ ] Employee dropdown populated
+    [ ] Location dropdown populated
+
+[ ] 6.2 CLOCK IN
+    [ ] Select employee works
+    [ ] Select location works
+    [ ] Clock In button works
+    [ ] Record created with current timestamp
+    [ ] Success message displays
+    [ ] Employee appears in active shifts
+
+[ ] 6.3 CLOCK OUT
+    [ ] Clock Out button visible for active shifts
+    [ ] Click records ClockOutTime
+    [ ] TotalHours calculated correctly
+    [ ] Success message displays
+    [ ] Employee removed from active shifts
+
+[ ] 6.4 CURRENTLY CLOCKED PAGE
+    [ ] Shows all employees currently clocked in
+    [ ] Displays employee name
+    [ ] Displays location
+    [ ] Displays clock in time
+    [ ] Displays duration
+    [ ] Clock Out button works
+
+[ ] 6.5 PUNCHES PAGE
+    [ ] Page loads correctly
+    [ ] Date picker works
+    [ ] Previous Day navigation works
+    [ ] Today button works
+    [ ] Next Day navigation works
+
+    [ ] SUMMARY CARDS
+        [ ] Absent count correct
+        [ ] Not Clocked In count correct
+        [ ] Late Arrivals count correct
+        [ ] On Time count correct
+        [ ] Total Scheduled count correct
+
+    [ ] CLICKABLE FILTER TABS
+        [ ] Click Absent - shows only absent
+        [ ] Click Not Clocked In - shows only not clocked
+        [ ] Click Late - shows only late arrivals
+        [ ] Click On Time - shows only on time
+        [ ] Click Total - shows all (clears filter)
+        [ ] Selected filter highlighted
+
+    [ ] ABSENT TABLE
+        [ ] Shows employees who didn't clock in (shift ended)
+        [ ] Displays employee name and email
+        [ ] Displays position
+        [ ] Displays scheduled shift times
+        [ ] Displays location
+        [ ] Shows ABSENT badge
+        [ ] Shows missed hours
+
+    [ ] NOT CLOCKED IN TABLE
+        [ ] Shows employees who haven't clocked in yet
+        [ ] Displays employee name and email
+        [ ] Displays position
+        [ ] Displays scheduled shift times
+        [ ] Displays location
+        [ ] Shows "Waiting" or "Past Grace Period" status
+        [ ] Shows time overdue
+
+    [ ] LATE ARRIVALS TABLE
+        [ ] Shows employees who clocked in 30+ min late
+        [ ] Displays employee name and email
+        [ ] Displays position
+        [ ] Displays scheduled time
+        [ ] Displays actual clock in time
+        [ ] Displays location
+        [ ] Shows late by duration
+
+    [ ] ON TIME TABLE
+        [ ] Shows employees who clocked in on time
+        [ ] Displays employee name
+        [ ] Displays position
+        [ ] Displays scheduled time
+        [ ] Displays actual clock in time
+        [ ] Displays location
+        [ ] Shows early/on time status
+
+
+================================================================================
+7. WORK HISTORY
+================================================================================
+
+[ ] 7.1 DAILY WORK HISTORY (WorkHistoryByDay)
+    [ ] Page loads correctly
+    [ ] Date picker works
+    [ ] Previous Day navigation works
+    [ ] Today button works
+    [ ] Next Day navigation works
+    [ ] Link to "View by Employee" works
+
+    [ ] SUMMARY CARDS
+        [ ] Selected date displays correctly
+        [ ] Total Workers count correct
+        [ ] Total Hours calculated correctly
+
+    [ ] WORKERS TABLE
+        [ ] Shows all employees who worked that day
+        [ ] Displays employee name
+        [ ] Displays position
+        [ ] Displays location
+        [ ] Displays clock in time
+        [ ] Displays clock out time (or "Still Working")
+        [ ] Displays hours worked
+        [ ] Displays status (Completed/Active)
+        [ ] Edit button visible and works
+        [ ] Total row shows combined hours
+
+    [ ] POSITION BREAKDOWN
+        [ ] Shows breakdown by position
+        [ ] Displays worker count per position
+        [ ] Displays hours per position
+
+[ ] 7.2 EMPLOYEE WORK HISTORY
+    [ ] Page loads correctly
+    [ ] Employee dropdown populated
+    [ ] Date range picker works
+    [ ] Filter button works
+    [ ] Shows clock records for selected employee
+    [ ] Shows total hours
+    [ ] Shows total days worked
+    [ ] Shows average hours per day
+
+[ ] 7.3 EDIT CLOCK RECORD
+    [ ] Edit button opens edit page
+    [ ] Form loads with current data
+    [ ] Employee info displays (read-only)
+    [ ] Location dropdown works
+    [ ] Clock In time editable
+    [ ] Clock Out time editable
+    [ ] Save button updates record
+    [ ] TotalHours recalculated on save
+    [ ] Success message displays
+    [ ] Redirect back to daily history
+    [ ] Cancel button works
+
+
+================================================================================
+8. REPORTS
+================================================================================
+
+[ ] 8.1 REPORTS INDEX
+    [ ] Page loads correctly
+    [ ] Date filter works
+    [ ] Location filter works
+    [ ] Employee filter works
+
+[ ] 8.2 REPORT TABS (CLICKABLE)
+    [ ] Service Tech tab clickable
+    [ ] Lifeguard tab clickable
+    [ ] Supervisor tab clickable
+    [ ] Manager tab clickable
+    [ ] Safety Audit tab clickable
+    [ ] Tab switching works
+    [ ] Badge counts correct on each tab
+
+[ ] 8.3 SERVICE TECH REPORTS TAB
+    [ ] Table loads correctly
+    [ ] Displays date
+    [ ] Displays technician name
+    [ ] Displays location
+    [ ] Displays chemical readings (if applicable)
+    [ ] Displays status
+    [ ] Clicking row opens details
+    [ ] Empty state displays when no reports
+
+[ ] 8.4 LIFEGUARD REPORTS TAB
+    [ ] Table loads correctly
+    [ ] Displays date
+    [ ] Displays lifeguard name
+    [ ] Displays location
+    [ ] Displays pool status (Open/Closed)
+    [ ] Displays safety percentage
+    [ ] Displays incidents (Reported/None)
+    [ ] Clicking row opens details
+    [ ] Empty state displays when no reports
+
+[ ] 8.5 SUPERVISOR REPORTS TAB
+    [ ] Table loads correctly
+    [ ] Displays date
+    [ ] Displays supervisor name
+    [ ] Displays location
+    [ ] Displays safety compliance percentage
+    [ ] Displays staff checks percentage
+    [ ] Displays notes indicator
+    [ ] Clicking row opens details
+    [ ] Empty state displays when no reports
+
+[ ] 8.6 MANAGER REPORTS TAB
+    [ ] Table loads correctly
+    [ ] Displays date
+    [ ] Displays manager name
+    [ ] Displays location
+    [ ] Displays relevant metrics
+    [ ] Clicking row opens details
+    [ ] Empty state displays when no reports
+
+[ ] 8.7 SAFETY AUDIT TAB
+    [ ] Table loads correctly
+    [ ] Displays date
+    [ ] Displays auditor name
+    [ ] Displays location
+    [ ] Displays audit results
+    [ ] Clicking row opens details
+    [ ] Empty state displays when no reports
+
+[ ] 8.8 REPORT DETAILS
+    [ ] Details page loads
+    [ ] All report fields display
+    [ ] Photos display (if applicable)
+    [ ] Chemical readings display (if applicable)
+    [ ] Signatures display (if applicable)
+    [ ] Back button works
+
+[ ] 8.9 EDIT REPORT (Manager/Admin)
+    [ ] Edit button visible for managers/admins
+    [ ] Edit form loads with current data
+    [ ] All fields editable
+    [ ] Submit updates report
+    [ ] Success message displays
+
+
+================================================================================
+9. API ENDPOINTS
+================================================================================
+
+[ ] 9.1 AUTHENTICATION API
+    [ ] POST /api/mobile/auth/login
+    [ ] POST /api/mobile/auth/register
+
+[ ] 9.2 USER API
+    [ ] GET /api/mobile/users
+    [ ] GET /api/mobile/users/{id}
+    [ ] GET /api/mobile/users/pending
+    [ ] POST /api/mobile/users/approve/{id}
+
+[ ] 9.3 LOCATION API
+    [ ] GET /api/mobile/locations
+    [ ] GET /api/mobile/locations/{id}
+
+[ ] 9.4 SCHEDULE API
+    [ ] GET /api/mobile/schedules
+    [ ] GET /api/mobile/schedules/user/{userId}
+    [ ] POST /api/mobile/schedules
+
+[ ] 9.5 CLOCK API
+    [ ] GET /api/mobile/clock/active
+    [ ] POST /api/mobile/clock/in
+    [ ] POST /api/mobile/clock/out
+    [ ] GET /api/mobile/clock/history/{userId}
+
+[ ] 9.6 REPORTS API
+    [ ] GET /api/mobile/reports
+    [ ] GET /api/mobile/reports/{id}
+    [ ] GET /api/mobile/reports/recent
+    [ ] POST /api/mobile/reports
+
+[ ] 9.7 DASHBOARD API
+    [ ] GET /api/mobile/dashboard/stats
+
+
+================================================================================
+10. NAVIGATION & UI
+================================================================================
+
+[ ] 10.1 SIDEBAR NAVIGATION
+    [ ] Dashboard link works
+    [ ] Employees link works
+    [ ] Locations link works
+    [ ] Schedules link works
+    [ ] Time Clock link works
+    [ ] Currently Clocked link works
+    [ ] Punches link works
+    [ ] Daily Work History link works
+    [ ] Employee History link works
+    [ ] Reports link works
+    [ ] API Documentation link works
+    [ ] Active page highlighted
+
+[ ] 10.2 TOP HEADER
+    [ ] Page title displays correctly
+    [ ] User avatar shows initials
+    [ ] User name displays
+    [ ] User role displays
+    [ ] Logout button works
+
+[ ] 10.3 RESPONSIVE DESIGN
+    [ ] Desktop layout (1920x1080)
+    [ ] Laptop layout (1366x768)
+    [ ] Tablet layout (768x1024)
+    [ ] Mobile layout (375x667)
+    [ ] Sidebar collapses on mobile
+    [ ] Tables scroll horizontally on mobile
+    [ ] Forms usable on mobile
+
+[ ] 10.4 ALERTS & NOTIFICATIONS
+    [ ] Success alerts display (green)
+    [ ] Warning alerts display (yellow)
+    [ ] Error alerts display (red)
+    [ ] Info alerts display (blue)
+    [ ] Alerts dismissible
+    [ ] Alerts auto-dismiss (if applicable)
+
+[ ] 10.5 LOADING STATES
+    [ ] Spinners show during data load
+    [ ] Tables show loading placeholder
+    [ ] Buttons disabled during submit
+    [ ] Loading overlay (if applicable)
+
+[ ] 10.6 EMPTY STATES
+    [ ] Empty employee list message
+    [ ] Empty location list message
+    [ ] Empty schedule message
+    [ ] Empty report list message
+    [ ] Empty active shifts message
+
+
+================================================================================
+11. DATABASE OPERATIONS
+================================================================================
+
+[ ] 11.1 USERS TABLE
+    [ ] INSERT works (Create user)
+    [ ] SELECT works (List/Details)
+    [ ] UPDATE works (Edit user)
+    [ ] DELETE works (Delete user)
+    [ ] All columns saved correctly:
+        - UserId, FirstName, LastName, Email, PasswordHash
+        - PhoneNumber, Position, Address
+        - EmergencyContact, EmergencyPhone
+        - HireDate, Status, Notes
+        - IsActive, IsApproved, ProfilePicture
+        - CreatedAt
+
+[ ] 11.2 JOBLOCATIONS TABLE
+    [ ] INSERT works (Create location)
+    [ ] SELECT works (List/Details)
+    [ ] UPDATE works (Edit location)
+    [ ] DELETE works (Delete location)
+    [ ] All columns saved correctly:
+        - LocationId, Name, Address, City, State, ZipCode, Country
+        - Latitude, Longitude, Radius
+        - ContactName, ContactPhone, ContactEmail
+        - PoolType, PoolSize, Notes
+        - IsActive, CreatedAt
+
+[ ] 11.3 SCHEDULES TABLE
+    [ ] INSERT works (Create schedule)
+    [ ] SELECT works (List/Details)
+    [ ] UPDATE works (Edit schedule)
+    [ ] DELETE works (Delete schedule)
+    [ ] All columns saved correctly:
+        - ScheduleId, UserId, LocationId, SupervisorId
+        - ScheduledDate, StartTime, EndTime
+        - Notes, IsPublished, PublishedAt, PublishedBy
+        - CreatedAt
+
+[ ] 11.4 CLOCKRECORDS TABLE
+    [ ] INSERT works (Clock in)
+    [ ] SELECT works (History)
+    [ ] UPDATE works (Clock out, Edit)
+    [ ] DELETE works (if applicable)
+    [ ] All columns saved correctly:
+        - RecordId, UserId, LocationId
+        - ClockInTime, ClockOutTime, TotalHours
+        - CreatedAt
+
+[ ] 11.5 INVITELINKS TABLE
+    [ ] INSERT works (Generate invite)
+    [ ] SELECT works (Validate invite)
+    [ ] UPDATE works (Mark as used)
+    [ ] Columns: InviteCode, Email, Position, CreatedAt, ExpiresAt, IsUsed
+
+[ ] 11.6 REPORTS/EVALUATIONS TABLES
+    [ ] INSERT works
+    [ ] SELECT works
+    [ ] UPDATE works
+    [ ] DELETE works
+
+
+================================================================================
+12. NOTIFICATIONS
+================================================================================
+
+[ ] 12.1 EMAIL NOTIFICATIONS
+    [ ] Schedule published notification
+    [ ] New employee registered notification
+    [ ] Employee approved notification
+    [ ] Missed clock-in notification (if implemented)
+    [ ] Email formatting correct
+    [ ] Links in email work
+
+[ ] 12.2 SMS NOTIFICATIONS
+    [ ] Schedule published SMS
+    [ ] Missed clock-in SMS (if implemented)
+    [ ] SMS content correct
+    [ ] Phone number formatting works
+
+[ ] 12.3 IN-APP NOTIFICATIONS
+    [ ] Pending approval count on dashboard
+    [ ] Issues today count on dashboard
+    [ ] Alert messages display correctly
+
+
+================================================================================
+13. ERROR HANDLING
+================================================================================
+
+[ ] 13.1 FORM VALIDATION
+    [ ] Required field validation
+    [ ] Email format validation
+    [ ] Phone format validation
+    [ ] Date range validation
+    [ ] Time validation (end > start)
+    [ ] Numeric field validation
+    [ ] Error messages display clearly
+
+[ ] 13.2 SERVER ERRORS
+    [ ] 404 Not Found page
+    [ ] 500 Server Error page
+    [ ] Database connection error handling
+    [ ] Timeout error handling
+    [ ] Graceful error messages
+
+[ ] 13.3 API ERRORS
+    [ ] 400 Bad Request response
+    [ ] 401 Unauthorized response
+    [ ] 403 Forbidden response
+    [ ] 404 Not Found response
+    [ ] 500 Server Error response
+    [ ] Error response format consistent
+
+
+================================================================================
+14. SECURITY
+================================================================================
+
+[ ] 14.1 AUTHENTICATION
+    [ ] Password hashing (BCrypt)
+    [ ] Session management
+    [ ] CSRF token validation
+    [ ] Secure cookie settings
+
+[ ] 14.2 AUTHORIZATION
+    [ ] Role-based access control
+    [ ] Admin-only functions protected
+    [ ] Manager functions protected
+    [ ] Employee restrictions enforced
+
+[ ] 14.3 DATA PROTECTION
+    [ ] SQL injection prevention (parameterized queries)
+    [ ] XSS prevention (output encoding)
+    [ ] Sensitive data not logged
+    [ ] Passwords not exposed in API
+
+
+================================================================================
+                            TEST EXECUTION LOG
+================================================================================
+
+Tester Name: _______________________
+Test Date: _______________________
+Environment: [ ] Development  [ ] Staging  [ ] Production
+Browser: _______________________
+Device: _______________________
+
+SUMMARY:
+Total Tests: ______
+Passed: ______
+Failed: ______
+Blocked: ______
+Not Tested: ______
+
+CRITICAL ISSUES FOUND:
+1. _________________________________________________________________
+2. _________________________________________________________________
+3. _________________________________________________________________
+
+NOTES:
+_____________________________________________________________________
+_____________________________________________________________________
+_____________________________________________________________________
+
+
+================================================================================
+                              END OF DOCUMENT
+================================================================================

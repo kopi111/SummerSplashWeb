@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using SummerSplashWeb.Models;
@@ -9,6 +10,8 @@ namespace SummerSplashWeb.Services
         Task<List<User>> GetAllUsersAsync();
         Task<User?> GetUserByIdAsync(int userId);
         Task<bool> UpdateUserAsync(User user);
+        Task<bool> CreateUserAsync(User user);
+        Task<string> GenerateInviteLinkAsync(string email, string position);
         Task<bool> ApproveUserAsync(int userId);
         Task<bool> AssignPositionAsync(int userId, string position);
         Task<bool> DeactivateUserAsync(int userId);

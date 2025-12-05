@@ -1,6 +1,7 @@
 @model SummerSplashWeb.Models.JobLocation
 @{
     ViewData["Title"] = "Add Location";
+    var employees = ViewBag.Employees as List<SummerSplashWeb.Models.User> ?? new List<SummerSplashWeb.Models.User>();
 }
 
 <div class="content-area">
@@ -89,20 +90,65 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Radius" class="form-label">
-                                <i class="bi bi-bullseye me-1"></i>Geofence Radius (meters)
-                            </label>
-                            <div class="input-group">
-                                <input asp-for="Radius" type="number" class="form-control" id="radius"
-                                       min="10" max="500" value="100" />
-                                <span class="input-group-text">meters</span>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Radius" class="form-label">
+                                    <i class="bi bi-bullseye me-1"></i>Geofence Radius (meters)
+                                </label>
+                                <div class="input-group">
+                                    <input asp-for="Radius" type="number" class="form-control" id="radius"
+                                           min="10" max="500" value="100" />
+                                    <span class="input-group-text">meters</span>
+                                </div>
                             </div>
-                            <small class="text-muted">Set the radius for employee clock-in geofence (10-500 meters)</small>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="LockboxCode" class="form-label">
+                                    <i class="bi bi-key me-1"></i>Lockbox Code
+                                </label>
+                                <input asp-for="LockboxCode" class="form-control" maxlength="8"
+                                       placeholder="e.g., ABC1234" style="text-transform: uppercase;" />
+                                <small class="text-muted">Up to 8 characters (letters & numbers)</small>
+                            </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Supervisor Section -->
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Location Supervisor</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="SupervisorId" class="form-label">Select Supervisor</label>
+                            <select asp-for="SupervisorId" class="form-select" id="supervisorSelect">
+                                <option value="">-- Select a Supervisor --</option>
+                                @foreach (var emp in employees.Where(e => e.IsActive))
+                                {
+                                    <option value="@emp.UserId"
+                                            data-name="@emp.FirstName @emp.LastName"
+                                            data-phone="@emp.PhoneNumber">
+                                        @emp.FirstName @emp.LastName (@emp.Position)
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Supervisor Name</label>
+                                <input asp-for="SupervisorName" class="form-control" id="supervisorName" readonly
+                                       style="background-color: #f8f9fa;" placeholder="Auto-filled" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Supervisor Phone</label>
+                                <input asp-for="SupervisorPhone" class="form-control" id="supervisorPhone" readonly
+                                       style="background-color: #f8f9fa;" placeholder="Auto-filled" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pool Details Section -->
                 <div class="card mb-4">
                     <div class="card-header bg-info text-white">
                         <h5 class="mb-0"><i class="bi bi-water me-2"></i>Pool Details</h5>
@@ -110,46 +156,157 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="PoolType" class="form-label">Pool Type</label>
-                                <select asp-for="PoolType" class="form-select">
+                                <label asp-for="PoolType" class="form-label">Pool Type <span class="text-danger">*</span></label>
+                                <select asp-for="PoolType" class="form-select" required>
                                     <option value="">Select Type</option>
-                                    <option value="Community">Community</option>
-                                    <option value="Private">Private</option>
-                                    <option value="Commercial">Commercial</option>
-                                    <option value="Municipal">Municipal</option>
+                                    <option value="Lifeguard Pool">Lifeguard Pool</option>
+                                    <option value="Pool Attendant Pool">Pool Attendant Pool</option>
+                                    <option value="Maintenance Pool">Maintenance Pool</option>
+                                    <option value="Residential Pool">Residential Pool</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label asp-for="PoolSize" class="form-label">Pool Size</label>
                                 <select asp-for="PoolSize" class="form-select">
                                     <option value="">Select Size</option>
-                                    <option value="Small">Small</option>
-                                    <option value="Medium">Medium</option>
-                                    <option value="Large">Large</option>
-                                    <option value="Olympic">Olympic</option>
+                                    <option value="Small">Small (up to 15,000 gal)</option>
+                                    <option value="Medium">Medium (15,000-30,000 gal)</option>
+                                    <option value="Large">Large (30,000-50,000 gal)</option>
+                                    <option value="Olympic">Olympic (50,000+ gal)</option>
                                 </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Pool Depth</label>
+                                <div class="input-group">
+                                    <input asp-for="PoolDepthFeet" type="number" class="form-control"
+                                           min="0" max="20" placeholder="Feet" />
+                                    <span class="input-group-text">ft</span>
+                                    <input asp-for="PoolDepthInches" type="number" class="form-control"
+                                           min="0" max="11" placeholder="Inches" />
+                                    <span class="input-group-text">in</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Wading Pool -->
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <div class="form-check form-switch mb-2">
+                                    <input asp-for="HasWadingPool" class="form-check-input" type="checkbox" id="hasWadingPool" />
+                                    <label class="form-check-label fw-semibold" for="hasWadingPool">
+                                        <i class="bi bi-droplet me-1"></i>Has Wading Pool (Baby Pool)
+                                    </label>
+                                </div>
+                                <div id="wadingPoolSection" style="display: none;">
+                                    <div class="input-group">
+                                        <span class="input-group-text">Size</span>
+                                        <input asp-for="WadingPoolSizeGallons" type="number" class="form-control"
+                                               min="0" placeholder="Enter gallons" />
+                                        <span class="input-group-text">gallons</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Spa -->
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <div class="form-check form-switch mb-2">
+                                    <input asp-for="HasSpa" class="form-check-input" type="checkbox" id="hasSpa" />
+                                    <label class="form-check-label fw-semibold" for="hasSpa">
+                                        <i class="bi bi-thermometer-half me-1"></i>Has Spa / Hot Tub
+                                    </label>
+                                </div>
+                                <div id="spaSection" style="display: none;">
+                                    <div class="input-group">
+                                        <span class="input-group-text">Size</span>
+                                        <input asp-for="SpaSizeGallons" type="number" class="form-control"
+                                               min="0" placeholder="Enter gallons" />
+                                        <span class="input-group-text">gallons</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Contact Information Section (2 contacts with roles) -->
                 <div class="card mb-4">
                     <div class="card-header bg-secondary text-white">
-                        <h5 class="mb-0"><i class="bi bi-person-lines-fill me-2"></i>Contact Information</h5>
+                        <h5 class="mb-0"><i class="bi bi-person-lines-fill me-2"></i>Location Contacts</h5>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3">
-                            <label asp-for="ContactName" class="form-label">Contact Name</label>
-                            <input asp-for="ContactName" class="form-control" placeholder="Primary contact name" />
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="ContactPhone" class="form-label">Phone</label>
-                                <input asp-for="ContactPhone" class="form-control" type="tel" placeholder="(555) 555-5555" />
+                        <!-- Primary Contact -->
+                        <div class="card mb-3 border-primary">
+                            <div class="card-header bg-primary bg-opacity-10">
+                                <strong><i class="bi bi-1-circle me-1"></i>Primary Contact</strong>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="ContactEmail" class="form-label">Email</label>
-                                <input asp-for="ContactEmail" class="form-control" type="email" placeholder="contact@example.com" />
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Contact Name</label>
+                                        <input name="Contact1Name" class="form-control" placeholder="Full name" />
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Role</label>
+                                        <select name="Contact1Role" class="form-select">
+                                            <option value="">Select Role</option>
+                                            <option value="Property Manager">Property Manager</option>
+                                            <option value="Regional Manager">Regional Manager</option>
+                                            <option value="Maintenance">Maintenance</option>
+                                            <option value="Pool Manager">Pool Manager</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Phone</label>
+                                        <input name="Contact1Phone" class="form-control" type="tel" placeholder="(555) 555-5555" />
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Email</label>
+                                        <input name="Contact1Email" class="form-control" type="email" placeholder="email@example.com" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Secondary Contact -->
+                        <div class="card border-secondary">
+                            <div class="card-header bg-secondary bg-opacity-10">
+                                <strong><i class="bi bi-2-circle me-1"></i>Secondary Contact</strong>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Contact Name</label>
+                                        <input name="Contact2Name" class="form-control" placeholder="Full name" />
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Role</label>
+                                        <select name="Contact2Role" class="form-select">
+                                            <option value="">Select Role</option>
+                                            <option value="Property Manager">Property Manager</option>
+                                            <option value="Regional Manager">Regional Manager</option>
+                                            <option value="Maintenance">Maintenance</option>
+                                            <option value="Pool Manager">Pool Manager</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Phone</label>
+                                        <input name="Contact2Phone" class="form-control" type="tel" placeholder="(555) 555-5555" />
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Email</label>
+                                        <input name="Contact2Email" class="form-control" type="email" placeholder="email@example.com" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -265,7 +422,45 @@
         let currentLayer = 'street';
 
         // Initialize map when DOM is ready
-        document.addEventListener('DOMContentLoaded', initMap);
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            setupSupervisorSelect();
+            setupPoolFeatureToggles();
+        });
+
+        // Supervisor dropdown handler
+        function setupSupervisorSelect() {
+            const select = document.getElementById('supervisorSelect');
+            const nameField = document.getElementById('supervisorName');
+            const phoneField = document.getElementById('supervisorPhone');
+
+            select.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                if (this.value) {
+                    nameField.value = selectedOption.dataset.name || '';
+                    phoneField.value = selectedOption.dataset.phone || '';
+                } else {
+                    nameField.value = '';
+                    phoneField.value = '';
+                }
+            });
+        }
+
+        // Pool feature toggles
+        function setupPoolFeatureToggles() {
+            const wadingPoolCheck = document.getElementById('hasWadingPool');
+            const wadingPoolSection = document.getElementById('wadingPoolSection');
+            const spaCheck = document.getElementById('hasSpa');
+            const spaSection = document.getElementById('spaSection');
+
+            wadingPoolCheck.addEventListener('change', function() {
+                wadingPoolSection.style.display = this.checked ? 'block' : 'none';
+            });
+
+            spaCheck.addEventListener('change', function() {
+                spaSection.style.display = this.checked ? 'block' : 'none';
+            });
+        }
 
         function initMap() {
             // Default center (US center)

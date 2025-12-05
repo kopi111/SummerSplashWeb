@@ -656,14 +656,14 @@ namespace SummerSplashWeb.Controllers.Api
                         hasSchedule = false,
                         scheduleId = (int?)null,
                         date = (DateTime?)null,
-                        startTime = (string)null,
-                        endTime = (string)null,
+                        startTime = (string?)null,
+                        endTime = (string?)null,
                         location = new
                         {
-                            name = (string)null,
-                            address = (string)null
+                            name = (string?)null,
+                            address = (string?)null
                         },
-                        supervisor = (string)null
+                        supervisor = (string?)null
                     };
                 }
 
